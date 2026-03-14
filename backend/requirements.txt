@@ -6,6 +6,9 @@ python-decouple==3.8
 psycopg2-binary==2.9.9
 gunicorn==22.0.0
 
+# AI
+google-generativeai==0.8.5
+
 # Dev / testing
 pytest==8.2.0
 pytest-django==4.8.0

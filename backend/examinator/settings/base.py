@@ -82,3 +82,6 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS", default="http://localhost:3000"
 ).split(",")
+
+# Google Gemini
+GEMINI_API_KEY = config("GEMINI_API_KEY", default="")
