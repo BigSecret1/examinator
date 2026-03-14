@@ -2,7 +2,7 @@
 #
 # Licensed under the Apache License, Version 2.0
 
-from rest_framework import permissions, viewsets
+from rest_framework import viewsets
 
 from .models import Question
 from .serializers import QuestionSerializer
@@ -10,7 +10,6 @@ from .serializers import QuestionSerializer
 
 class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = QuestionSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         queryset = Question.objects.select_related("topic__subject").prefetch_related("answers")
