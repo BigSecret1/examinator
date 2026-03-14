@@ -1,0 +1,56 @@
+# Copyright 2026 BigSecret1
+#
+# Licensed under the Apache License, Version 2.0
+
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: examinator
+      POSTGRES_USER: examinator
+      POSTGRES_PASSWORD: examinator
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_SETTINGS_MODULE: examinator.settings.development
+      SECRET_KEY: dev-secret-key-change-in-production
+      DB_NAME: examinator
+      DB_USER: examinator
+      DB_PASSWORD: examinator
+      DB_HOST: db
+      DB_PORT: "5432"
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    command: npm run dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
