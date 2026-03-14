@@ -8,7 +8,7 @@
 
 | Layer     | Technology        |
 |-----------|-------------------|
-| Frontend  | Next.js 14 (TypeScript) |
+| Frontend  | Next.js 15 (TypeScript) |
 | Backend   | Django 5 + Django REST Framework |
 | Database  | PostgreSQL 16     |
 

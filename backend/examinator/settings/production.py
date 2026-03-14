@@ -17,7 +17,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": config("DB_NAME", default="examinator"),
         "USER": config("DB_USER", default="examinator"),
-        "PASSWORD": config("DB_PASSWORD"),
+        "PASSWORD": config("DB_PASSWORD"),  # required – raises UndefinedValueError at startup if unset
         "HOST": config("DB_HOST", default="db"),
         "PORT": config("DB_PORT", default="5432"),
     }
