@@ -1,0 +1,51 @@
+# ──────────────────────────────────────────────
+# OS / Editor
+# ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# ──────────────────────────────────────────────
+# Environment files  (never commit secrets)
+# ──────────────────────────────────────────────
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ──────────────────────────────────────────────
+# Next.js (frontend/)
+# ──────────────────────────────────────────────
+frontend/.next/
+frontend/out/
+frontend/node_modules/
+frontend/.npm
+frontend/.eslintcache
+
+# ──────────────────────────────────────────────
+# Django / Python (backend/)
+# ──────────────────────────────────────────────
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/**/*.pyo
+backend/*.egg-info/
+backend/.eggs/
+backend/dist/
+backend/build/
+backend/.mypy_cache/
+backend/.pytest_cache/
+backend/htmlcov/
+backend/.coverage
+backend/db.sqlite3
+backend/media/
+backend/staticfiles/
+
+# ──────────────────────────────────────────────
+# Docker
+# ──────────────────────────────────────────────
+*.log
