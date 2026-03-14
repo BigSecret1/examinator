@@ -49,3 +49,4 @@ backend/staticfiles/
 # Docker
 # ──────────────────────────────────────────────
 *.log
+localenv
