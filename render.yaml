@@ -1,0 +1,67 @@
+# Render Blueprint – https://render.com/docs/blueprint-spec
+# Deploy: connect repo on Render dashboard ➜ it auto-discovers this file.
+
+databases:
+  - name: examinator-db
+    plan: free
+    databaseName: examinator
+    user: examinator
+
+services:
+  # ── Django API ──────────────────────────────
+  - type: web
+    name: examinator-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: ./build.sh
+    startCommand: gunicorn examinator.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: examinator.settings.production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false          # set manually after frontend deploys
+      - key: GEMINI_API_KEY
+        sync: false          # set manually in Render dashboard
+      - key: DB_NAME
+        fromDatabase:
+          name: examinator-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: examinator-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: examinator-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: examinator-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: examinator-db
+          property: port
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: SECURE_SSL_REDIRECT
+        value: "False"       # Render handles TLS termination
+
+  # ── Next.js Frontend ────────────────────────
+  - type: web
+    name: examinator-frontend
+    runtime: node
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        sync: false          # set to https://examinator-backend.onrender.com/api
+      - key: NODE_VERSION
+        value: "20"

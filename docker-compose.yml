@@ -8,10 +8,12 @@ services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
+    env_file:
+      - ./backend/.env
     environment:
-      POSTGRES_DB: examinator
-      POSTGRES_USER: examinator
-      POSTGRES_PASSWORD: examinator
+      POSTGRES_DB: ${DB_NAME:-examinator}
+      POSTGRES_USER: ${DB_USER:-examinator}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-examinator}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -27,14 +29,10 @@ services:
       - ./backend:/app
     ports:
       - "8000:8000"
+    env_file:
+      - ./backend/.env
     environment:
       DJANGO_SETTINGS_MODULE: examinator.settings.development
-      SECRET_KEY: dev-secret-key-change-in-production
-      DB_NAME: examinator
-      DB_USER: examinator
-      DB_PASSWORD: examinator
-      DB_HOST: db
-      DB_PORT: "5432"
     depends_on:
       - db
 
