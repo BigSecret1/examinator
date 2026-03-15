@@ -100,10 +100,10 @@ def daily_questions(request):
             difficulty=difficulty,
             count=10,
         )
-    except Exception as e:
+    except Exception:
         logger.exception("Gemini generation failed")
         return Response(
-            {"error": f"Failed to generate questions: {e}"},
+            {"error": "Failed to generate questions. Please try again later."},
             status=status.HTTP_502_BAD_GATEWAY,
         )
 
