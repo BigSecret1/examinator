@@ -153,11 +153,7 @@ export default function FilterPanel({ subjects, onStart, loading }: Props) {
                 onClick={() => setDifficulty(d)}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-medium capitalize transition-all ${
                   difficulty === d
-                    ? d === "easy"
-                      ? "bg-success/20 text-success border border-success/30"
-                      : d === "medium"
-                      ? "bg-warning/20 text-warning border border-warning/30"
-                      : "bg-error/20 text-error border border-error/30"
+                    ? "bg-accent/20 text-accent-light border border-accent/30"
                     : "bg-surface-light border border-surface-lighter text-text-secondary hover:border-surface-lighter hover:text-text-primary"
                 }`}
               >
