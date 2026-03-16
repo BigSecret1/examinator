@@ -4,7 +4,7 @@
 
 from rest_framework import serializers
 
-from .models import Subject, Topic
+from ..models import Subject, Topic
 
 
 class TopicSerializer(serializers.ModelSerializer):

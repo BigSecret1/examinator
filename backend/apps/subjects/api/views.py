@@ -4,7 +4,7 @@
 
 from rest_framework import viewsets
 
-from .models import Subject, Topic
+from ..models import Subject, Topic
 from .serializers import SubjectSerializer, TopicSerializer
 
 
