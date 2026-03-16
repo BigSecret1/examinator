@@ -115,19 +115,29 @@ export default function FilterPanel({ subjects, onStart, loading }: Props) {
           <label className="block text-sm font-medium text-text-secondary mb-2">
             Topic
           </label>
-          <select
-            value={selectedTopic}
-            onChange={(e) => setSelectedTopic(e.target.value)}
-            disabled={!selectedSubject}
-            className="w-full bg-surface-light border border-surface-lighter rounded-xl px-4 py-3 text-text-primary hover:border-secondary/50 focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed appearance-none"
-          >
-            <option value="all">All Topics</option>
-            {topics.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={selectedTopic}
+              onChange={(e) => setSelectedTopic(e.target.value)}
+              disabled={!selectedSubject}
+              className="w-full bg-surface-light border border-surface-lighter rounded-xl px-4 pr-10 py-3 text-text-primary hover:border-secondary/50 focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed appearance-none"
+            >
+              <option value="all">All Topics</option>
+              {topics.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            <svg
+              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
         </div>
 
         {/* Difficulty */}
