@@ -4,9 +4,8 @@
 
 from django.db import models
 
-class Subject(models.Model):
-    """A broad category of study (e.g. Mathematics, History)."""
 
+class Subject(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -15,20 +14,40 @@ class Subject(models.Model):
         return self.name
 
     class Meta:
-        ordering = ["name"]
+        ordering = ['name']
 
 
 class Topic(models.Model):
-    """A specific topic within a subject (e.g. Algebra within Mathematics)."""
-
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="topics")
+    subject = models.ForeignKey(
+        Subject, on_delete=models.CASCADE,
+        related_name='topics'
+    )
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.subject.name} – {self.name}"
+        return f'{self.subject.name} – {self.name}'
 
     class Meta:
-        unique_together = [["subject", "name"]]
-        ordering = ["subject", "name"]
+        unique_together = [['subject', 'name']]
+        ordering = ['subject', 'name']
+
+
+class SubTopic(models.Model):
+    topic = models.ForeignKey(
+        Topic,
+        on_delete=models.CASCADE,
+        related_name='subtopics',
+    )
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.topic.name} – {self.name}'
+
+    class Meta:
+        db_table = 'examinator_subtopic'
+        unique_together = [['topic', 'name']]
+        ordering = ['topic', 'name']
