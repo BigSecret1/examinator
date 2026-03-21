@@ -136,7 +136,7 @@ def generate_questions(
                 questions = data.get('questions', [])
                 for q in questions:
                     if len(q.get('answers', [])) != 4:
-                        raise ValueError('Each question must have exactly 4 answers.')
+                        raise ValueError('Each question must have exactly 4 options.')
                     correct_count = sum(1 for a in q['answers'] if a.get('is_correct'))
                     if correct_count != 1:
                         raise ValueError('Each question must have exactly 1 correct answer.')
