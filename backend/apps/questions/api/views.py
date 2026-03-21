@@ -15,7 +15,7 @@ from apps.subjects.models import Subject, Topic
 
 from ..models import Answer, Question
 from .serializers import QuestionSerializer
-from ..services import generate_questions
+from .actions import generate_questions
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +94,7 @@ def daily_questions(request):
 
     # Generate via Gemini
     try:
-        raw_questions = generate_questions(
+        result = generate_questions(
             subject_name=subject.name,
             topic_name=topic_name,
             difficulty=difficulty,
@@ -106,6 +106,14 @@ def daily_questions(request):
             {"error": f"Failed to generate questions: {e}"},
             status=status.HTTP_502_BAD_GATEWAY,
         )
+
+    if result.get("status") == "invalid_topic":
+        return Response(
+            {"error": result.get("message", "The topic does not match the subject.")},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    raw_questions = result.get("questions", [])
 
     # Resolve or create topic for storage
     if topic_id == "all" or not topic_id:
@@ -121,6 +129,7 @@ def daily_questions(request):
         q_obj = Question.objects.create(
             topic=storage_topic,
             text=q_data["text"],
+            explanation=q_data.get("explanation", ""),
             difficulty=difficulty,
         )
         for a_data in q_data["answers"]:

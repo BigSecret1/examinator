@@ -22,6 +22,6 @@ class QuestionSerializer(serializers.ModelSerializer):
         model = Question
         fields = [
             "id", "topic", "topic_name", "subject_name",
-            "text", "difficulty", "answers", "created_at", "updated_at",
+            "text", "explanation", "difficulty", "answers", "created_at", "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
