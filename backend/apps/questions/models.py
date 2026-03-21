@@ -21,6 +21,7 @@ class Question(models.Model):
 
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name="questions")
     text = models.TextField()
+    explanation = models.TextField(blank=True, default='')
     difficulty = models.CharField(
         max_length=10, choices=DIFFICULTY_CHOICES, default=DIFFICULTY_MEDIUM
     )
