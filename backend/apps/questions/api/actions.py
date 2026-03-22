@@ -84,11 +84,11 @@ MCQ_SCHEMA = {
 
 
 def generate_questions(
-    subject_name: str,
-    topic_name: str,
-    difficulty: str,
-    count: int = 10,
-    subtopic_name: str = '',
+        subject_name: str,
+        topic_name: str,
+        difficulty: str,
+        subtopic_name: str,
+        count: int = 10,
 ) -> dict:
     '''Call Google Gemini to generate MCQs.
 
@@ -105,7 +105,7 @@ def generate_questions(
         count=count,
         subject=subject_name,
         topic=topic_name,
-        subtopic=subtopic_name or 'None',
+        subtopic=subtopic_name,
         difficulty=difficulty,
     )
 
@@ -139,12 +139,14 @@ def generate_questions(
                         raise ValueError('Each question must have exactly 4 options.')
                     correct_count = sum(1 for a in q['answers'] if a.get('is_correct'))
                     if correct_count != 1:
-                        raise ValueError('Each question must have exactly 1 correct answer.')
+                        raise ValueError(
+                            'Each question must have exactly 1 correct answer.')
 
                 return data
 
             except Exception as e:
-                logger.warning('Model %s attempt %d failed: %s', model_name, attempt + 1, e)
+                logger.warning('Model %s attempt %d failed: %s', model_name,
+                               attempt + 1, e)
                 last_error = e
                 if attempt < max_retries - 1:
                     time.sleep(delays[attempt])
