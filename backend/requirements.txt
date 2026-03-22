@@ -10,6 +10,9 @@ whitenoise==6.7.0
 # AI
 google-generativeai==0.8.5
 
+# Data loading
+PyYAML==6.0.2
+
 # Dev / testing
 pytest==8.2.0
 pytest-django==4.8.0
