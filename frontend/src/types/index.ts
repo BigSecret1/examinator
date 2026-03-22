@@ -9,6 +9,8 @@ export interface Question {
   topic: number;
   topic_name: string;
   subject_name: string;
+  subtopic_id: number | null;
+  subtopic_name: string | null;
   text: string;
   difficulty: "easy" | "medium" | "hard";
   answers: Answer[];
@@ -16,10 +18,18 @@ export interface Question {
   updated_at: string;
 }
 
+export interface SubTopic {
+  id: number;
+  name: string;
+  description: string;
+  created_at: string;
+}
+
 export interface Topic {
   id: number;
   name: string;
   description: string;
+  subtopics: SubTopic[];
   created_at: string;
 }
 
