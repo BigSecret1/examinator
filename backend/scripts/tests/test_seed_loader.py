@@ -63,7 +63,12 @@ class TestSubtopicLoaderValidate(TestCase):
         self.assertIn('missing "subject"', self.loader.errors[0])
 
     def test_valid_entry_returns_tuple(self):
-        entry = {'name': '  Sub A  ', 'description': '  Desc  ', 'topic': '  Ancient  ', 'subject': '  History  '}
+        entry = {
+            'name': '  Sub A  ',
+            'description': '  Desc  ',
+            'topic': '  Ancient  ',
+            'subject': '  History  '
+        }
         result = self.loader.validate(1, entry)
         self.assertEqual(result, ('Sub A', 'Desc', 'ancient', 'history'))
         self.assertEqual(len(self.loader.errors), 0)
@@ -78,7 +83,8 @@ class TestSubtopicLoaderPersist(TestCase):
         mock_topic = MagicMock()
         mock_topic.subject.name = 'History'
         mock_topic.name = 'Ancient'
-        mock_topic_cls.objects.select_related.return_value.all.return_value = [mock_topic]
+        mock_topic_cls.objects.select_related.return_value.all.return_value = [
+            mock_topic]
         mock_subtopic_cls.objects.update_or_create.return_value = (MagicMock(), True)
 
         loader = SubtopicLoader.__new__(SubtopicLoader)
@@ -86,7 +92,12 @@ class TestSubtopicLoaderPersist(TestCase):
         loader.updated = 0
         loader.errors = []
 
-        items = [{'name': 'Sub A', 'description': 'Desc', 'topic': 'ancient', 'subject': 'history'}]
+        items = [{
+            'name': 'Sub A',
+            'description': 'Desc',
+            'topic': 'ancient',
+            'subject': 'history'
+        }]
         loader.persist(items)
 
         self.assertEqual(loader.created, 1)
@@ -95,7 +106,10 @@ class TestSubtopicLoaderPersist(TestCase):
 
     @patch('scripts.seed_loader.SubTopic')
     @patch('scripts.seed_loader.Topic')
-    def test_persist_records_error_for_missing_topic(self, mock_topic_cls, mock_subtopic_cls):
+    def test_persist_records_error_for_missing_topic(
+            self,
+            mock_topic_cls,
+            mock_subtopic_cls):
         mock_topic_cls.objects.select_related.return_value.all.return_value = []
 
         loader = SubtopicLoader.__new__(SubtopicLoader)
@@ -103,7 +117,12 @@ class TestSubtopicLoaderPersist(TestCase):
         loader.updated = 0
         loader.errors = []
 
-        items = [{'name': 'Sub A', 'description': 'Desc', 'topic': 'nonexistent', 'subject': 'history'}]
+        items = [{
+            'name': 'Sub A',
+            'description': 'Desc',
+            'topic': 'nonexistent',
+            'subject': 'history'
+        }]
         loader.persist(items)
 
         self.assertEqual(loader.created, 0)
