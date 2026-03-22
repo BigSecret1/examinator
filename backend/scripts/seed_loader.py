@@ -30,8 +30,6 @@ def read_file(path):
     return data
 
 
-# ── Base loader (SRP: one reason to change per method, OCP: extend via subclass) ──
-
 class SeedLoader(ABC):
     """Abstract base for all seed-data loaders."""
 
@@ -42,23 +40,20 @@ class SeedLoader(ABC):
         self.errors = []
 
     def load(self):
-        """Template method — read → parse → persist → report."""
-        data = read_file(self.yaml_path)
-        items = self.parse(data)
-        if not items:
-            raise ValueError(f'No entries found in {self.yaml_path.name}.')
+        """Read → persist → report."""
+        items = read_file(self.yaml_path)
         with transaction.atomic():
             self.persist(items)
         self.report()
 
     @abstractmethod
-    def parse(self, data):
-        """Extract flat list of items from raw YAML structure."""
+    def validate(self, i, entry):
+        """validate the given entry."""
         ...
 
     @abstractmethod
     def persist(self, items):
-        """Validate and upsert items into the database."""
+        """upsert items into the database."""
         ...
 
     def report(self):
@@ -75,20 +70,26 @@ class SeedLoader(ABC):
         print()
 
 
-# ── Concrete loader (LSP: substitutable for SeedLoader anywhere) ──
-
 class SubtopicLoader(SeedLoader):
 
-    def parse(self, data):
-        items = []
-        for block in data:
-            if isinstance(block, dict) and 'subtopics' in block:
-                items.extend(block['subtopics'])
-            elif isinstance(block, dict) and 'name' in block:
-                items.append(block)
-            else:
-                print(f'WARNING: Skipping unrecognised block: {block}')
-        return items
+    def validate(self, i, entry):
+        """Validate a single entry. Returns (name, description, topic_ref, subject_ref) or None."""
+        name = (entry.get('name') or '').strip()
+        description = (entry.get('description') or '').strip()
+        topic_ref = (entry.get('topic') or '').strip().lower()
+        subject_ref = (entry.get('subject') or '').strip().lower()
+
+        if not name:
+            self.errors.append(f'Row {i}: missing "name"')
+            return None
+        if not topic_ref:
+            self.errors.append(f'Row {i} ({name}): missing "topic"')
+            return None
+        if not subject_ref:
+            self.errors.append(f'Row {i} ({name}): missing "subject"')
+            return None
+
+        return name, description, topic_ref, subject_ref
 
     def persist(self, items):
         topics_by_key = {
@@ -97,20 +98,11 @@ class SubtopicLoader(SeedLoader):
         }
 
         for i, entry in enumerate(items, start=1):
-            name = (entry.get('name') or '').strip()
-            description = (entry.get('description') or '').strip()
-            topic_ref = (entry.get('topic') or '').strip().lower()
-            subject_ref = (entry.get('subject') or '').strip().lower()
+            result = self.validate(i, entry)
+            if result is None:
+                continue
 
-            if not name:
-                self.errors.append(f'Row {i}: missing "name"')
-                continue
-            if not topic_ref:
-                self.errors.append(f'Row {i} ({name}): missing "topic"')
-                continue
-            if not subject_ref:
-                self.errors.append(f'Row {i} ({name}): missing "subject"')
-                continue
+            name, description, topic_ref, subject_ref = result
 
             topic = topics_by_key.get((subject_ref, topic_ref))
             if topic is None:
@@ -130,7 +122,5 @@ class SubtopicLoader(SeedLoader):
                 self.updated += 1
 
 
-def load_subtopics():
-    loader = SubtopicLoader(SEEDS_DIR / 'subtopics.yaml')
-    loader.load()
-    print()
+def load_all():
+    SubtopicLoader(SEEDS_DIR / 'subtopics.yaml').load()

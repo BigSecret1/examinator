@@ -4,11 +4,11 @@
 
 from django.core.management.base import BaseCommand
 
-from scripts.seed_loader import load_subtopics
+from scripts.seed_loader import load_all
 
 
 class Command(BaseCommand):
     help = 'Load seed data (subtopics, etc.) from YAML files into the database.'
 
     def handle(self, *args, **options):
-        load_subtopics()
+        load_all()

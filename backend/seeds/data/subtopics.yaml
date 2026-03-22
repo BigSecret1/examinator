@@ -1,75 +1,86 @@
 # Subject: History | Topic: Ancient
 # This file contains the complete list of regional and thematic subtopics.
 
-- subtopics:
-    # --- REGIONAL: ANCIENT INDIA ---
-    - name: Prehistoric India
-      description: Paleolithic, Mesolithic, and Neolithic eras; early tool-making and the rock art of Bhimbetka.
-      topic: ancient
-      subject: history
-    - name: Indus Valley Civilization
-      description: Harappan urban planning, drainage systems, trade with Mesopotamia, and the script of Mohenjo-Daro.
-      topic: ancient
-      subject: history
-    - name: Vedic Period
-      description: Early and Later Vedic society, Rig Vedic hymns, the Varna system, and Upanishadic philosophy.
-      topic: ancient
-      subject: history
-    - name: Buddhism & Jainism
-      description: Origins, core philosophies (Four Noble Truths, Ahimsa), major councils, and spread of these religions.
-      topic: ancient
-      subject: history
-    - name: The Mauryan Empire
-      description: Chandragupta Maurya, Kautilya's Arthashastra, and Ashoka's Edicts on Dhamma.
-      topic: ancient
-      subject: history
-    - name: The Gupta Empire
-      description: The Golden Age of India; advancements in Sanskrit literature, mathematics (Aryabhata), and metallurgy.
-      topic: ancient
-      subject: history
+# --- REGIONAL: ANCIENT INDIA ---
+- name: Prehistoric India
+  description: Paleolithic, Mesolithic, and Neolithic eras; early tool-making and the rock art of Bhimbetka.
+  topic: ancient
+  subject: history
 
-    # --- REGIONAL: WESTERN & MIDDLE EASTERN ---
-    - name: Ancient Mesopotamia
-      description: Sumerian city-states, the invention of Cuneiform, the Code of Hammurabi, and Ziggurat architecture.
-      topic: ancient
-      subject: history
-    - name: Ancient Egypt
-      description: The Old, Middle, and New Kingdoms; Pharaohs, Hieroglyphics, Pyramids, and Egyptian Mythology.
-      topic: ancient
-      subject: history
-    - name: Ancient Greece
-      description: The rise of the Polis (Athens/Sparta), Persian Wars, Classical Philosophy (Socrates, Plato), and the Olympics.
-      topic: ancient
-      subject: history
-    - name: Ancient Rome
-      description: From the Roman Republic to the Empire; Roman Law, Engineering (Aqueducts), and the rise of Christianity.
-      topic: ancient
-      subject: history
+- name: Indus Valley Civilization
+  description: Harappan urban planning, drainage systems, trade with Mesopotamia, and the script of Mohenjo-Daro.
+  topic: ancient
+  subject: history
 
-    # --- REGIONAL: EAST ASIA & AMERICAS ---
-    - name: Ancient China
-      description: Early Dynasties (Shang, Zhou, Qin, Han); the Silk Road, Great Wall, and the Mandate of Heaven.
-      topic: ancient
-      subject: history
-    - name: Mesoamerican Civilizations
-      description: The Olmec, Maya, and Aztec civilizations; achievements in astronomy, calendars, and stepped pyramids.
-      topic: ancient
-      subject: history
+- name: Vedic Period
+  description: Early and Later Vedic society, Rig Vedic hymns, the Varna system, and Upanishadic philosophy.
+  topic: ancient
+  subject: history
 
-    # --- THEMATIC: CROSS-CUTTING TOPICS ---
-    - name: Ancient World Economy
-      description: Early trade routes (Silk Road, Incense Route), the evolution of coinage, and the barter system.
-      topic: ancient
-      subject: history
-    - name: Ancient Architecture & Art
-      description: Comparative study of Temple styles, Stupas, Rock-cut caves, and the Seven Wonders of the Ancient World.
-      topic: ancient
-      subject: history
-    - name: Ancient Political Systems
-      description: Transition from tribal chiefdoms to absolute monarchies and early forms of direct democracy.
-      topic: ancient
-      subject: history
-    - name: Science & Technology in Antiquity
-      description: Ancient medicine (Ayurveda), astronomy, maritime technology, and early irrigation systems.
-      topic: ancient
-      subject: history
+- name: Buddhism & Jainism
+  description: Origins, core philosophies (Four Noble Truths, Ahimsa), major councils, and spread of these religions.
+  topic: ancient
+  subject: history
+
+- name: The Mauryan Empire
+  description: Chandragupta Maurya, Kautilya's Arthashastra, and Ashoka's Edicts on Dhamma.
+  topic: ancient
+  subject: history
+
+- name: The Gupta Empire
+  description: The Golden Age of India; advancements in Sanskrit literature, mathematics (Aryabhata), and metallurgy.
+  topic: ancient
+  subject: history
+
+# --- REGIONAL: WESTERN & MIDDLE EASTERN ---
+- name: Ancient Mesopotamia
+  description: Sumerian city-states, the invention of Cuneiform, the Code of Hammurabi, and Ziggurat architecture.
+  topic: ancient
+  subject: history
+
+- name: Ancient Egypt
+  description: The Old, Middle, and New Kingdoms; Pharaohs, Hieroglyphics, Pyramids, and Egyptian Mythology.
+  topic: ancient
+  subject: history
+
+- name: Ancient Greece
+  description: The rise of the Polis (Athens/Sparta), Persian Wars, Classical Philosophy (Socrates, Plato), and the Olympics.
+  topic: ancient
+  subject: history
+
+- name: Ancient Rome
+  description: From the Roman Republic to the Empire; Roman Law, Engineering (Aqueducts), and the rise of Christianity.
+  topic: ancient
+  subject: history
+
+# --- REGIONAL: EAST ASIA & AMERICAS ---
+- name: Ancient China
+  description: Early Dynasties (Shang, Zhou, Qin, Han); the Silk Road, Great Wall, and the Mandate of Heaven.
+  topic: ancient
+  subject: history
+
+- name: Mesoamerican Civilizations
+  description: The Olmec, Maya, and Aztec civilizations; achievements in astronomy, calendars, and stepped pyramids.
+  topic: ancient
+  subject: history
+
+# --- THEMATIC: CROSS-CUTTING TOPICS ---
+- name: Ancient World Economy
+  description: Early trade routes (Silk Road, Incense Route), the evolution of coinage, and the barter system.
+  topic: ancient
+  subject: history
+
+- name: Ancient Architecture & Art
+  description: Comparative study of Temple styles, Stupas, Rock-cut caves, and the Seven Wonders of the Ancient World.
+  topic: ancient
+  subject: history
+
+- name: Ancient Political Systems
+  description: Transition from tribal chiefdoms to absolute monarchies and early forms of direct democracy.
+  topic: ancient
+  subject: history
+
+- name: Science & Technology in Antiquity
+  description: Ancient medicine (Ayurveda), astronomy, maritime technology, and early irrigation systems.
+  topic: ancient
+  subject: history
