@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from apps.subjects.models import Subject, SubTopic, Topic
 
 from ..models import Answer, Question
-from .serializers import QuestionSerializer
+from .serializers import QuestionSerializer, DailyQuestionsParamsSerializer
 from .actions import generate_questions
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,10 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = QuestionSerializer
 
     def get_queryset(self):
-        queryset = Question.objects.select_related("topic__subject").prefetch_related("answers")
+        queryset = Question.objects.select_related(
+            "topic__subject",
+            "subtopic"
+        ).prefetch_related("answers")
         topic_id = self.request.query_params.get("topic")
         difficulty = self.request.query_params.get("difficulty")
         if topic_id:
@@ -41,8 +44,13 @@ def daily_questions(request):
     Query params:
         subject  – subject ID (required)
         topic    – topic ID, or 'all' (default: all)
+        subtopic    – subtopic ID, or 'all' (default: all)
         difficulty – easy | medium | hard (default: medium)
     """
+    params = DailyQuestionsParamsSerializer(data=request.query_params)
+    if not params.is_valid():
+        return Response(params.errors, status=status.HTTP_400_BAD_REQUEST)
+
     subject_id = request.query_params.get("subject")
     topic_id = request.query_params.get("topic", "all")
     subtopic_id = request.query_params.get("subtopic", "all")
@@ -53,16 +61,25 @@ def daily_questions(request):
         subtopic_id = "all"
 
     if not subject_id:
-        return Response({"error": "subject is required."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"error": "subject is required."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     if difficulty not in ("easy", "medium", "hard"):
-        return Response({"error": "difficulty must be easy, medium, or hard."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"error": "difficulty must be easy, medium, or hard."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     # Resolve subject
     try:
         subject = Subject.objects.get(pk=subject_id)
     except Subject.DoesNotExist:
-        return Response({"error": "Subject not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"error": "Subject not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
 
     # Resolve topic
     topic_name = "All Topics"
@@ -71,7 +88,10 @@ def daily_questions(request):
             topic = Topic.objects.get(pk=topic_id, subject=subject)
             topic_name = topic.name
         except Topic.DoesNotExist:
-            return Response({"error": "Topic not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Topic not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
     # Resolve subtopic
     resolved_subtopic = None
@@ -81,11 +101,14 @@ def daily_questions(request):
             resolved_subtopic = SubTopic.objects.get(pk=subtopic_id, topic_id=topic_id)
             subtopic_name = resolved_subtopic.name
         except SubTopic.DoesNotExist:
-            return Response({"error": "Subtopic not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Subtopic not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
     # Build a cache key unique to this combination + today's date
     today = date.today().isoformat()
-    subtopic_token = subtopic_id if resolved_subtopic else "all"
+    subtopic_token = str(resolved_subtopic.pk) if resolved_subtopic else "all"
     key_raw = f"daily:{subject.id}:{topic_id}:{subtopic_token}:{difficulty}:{today}"
     cache_key = "dq_" + hashlib.md5(key_raw.encode()).hexdigest()
 
@@ -138,7 +161,8 @@ def daily_questions(request):
     # Resolve or create topic for storage
     if topic_id == "all" or not topic_id:
         storage_topic, _ = Topic.objects.get_or_create(
-            subject=subject, name="General", defaults={"description": "General questions"}
+            subject=subject, name="General",
+            defaults={"description": "General questions"}
         )
     else:
         storage_topic = Topic.objects.get(pk=topic_id)
