@@ -25,11 +25,11 @@ export default function Home() {
       .finally(() => setSubjectsLoading(false));
   }, []);
 
-  async function handleStart(subjectId: number, topicId: string | number, difficulty: Difficulty) {
+  async function handleStart(subjectId: number, topicId: string | number, difficulty: Difficulty, subtopicId: string | number = "all") {
     setLoading(true);
     setError(null);
     try {
-      const data = await getDailyQuestions(subjectId, topicId, difficulty);
+      const data = await getDailyQuestions(subjectId, topicId, difficulty, subtopicId);
       setQuestions(data);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Something went wrong.");

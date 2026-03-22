@@ -19,12 +19,14 @@ export async function getSubjects() {
 export async function getDailyQuestions(
   subjectId: number,
   topicId: string | number,
-  difficulty: string
+  difficulty: string,
+  subtopicId: string | number = "all"
 ) {
   const params = new URLSearchParams({
     subject: String(subjectId),
     topic: String(topicId),
     difficulty,
+    subtopic: String(subtopicId),
   });
   const data = await fetchJSON<import("@/types").Question[]>(
     `${API_URL}/questions/daily/?${params}`
