@@ -4,7 +4,7 @@
 
 from django.db import models
 
-from apps.subjects.models import Topic
+from apps.subjects.models import SubTopic, Topic
 
 
 class Question(models.Model):
@@ -20,6 +20,10 @@ class Question(models.Model):
     ]
 
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name="questions")
+    subtopic = models.ForeignKey(
+        SubTopic, on_delete=models.SET_NULL, related_name="questions",
+        null=True, blank=True,
+    )
     text = models.TextField()
     explanation = models.TextField(blank=True, default='')
     difficulty = models.CharField(

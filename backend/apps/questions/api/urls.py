@@ -8,8 +8,8 @@ from rest_framework.routers import DefaultRouter
 from .views import QuestionViewSet, daily_questions
 
 router = DefaultRouter()
-router.register("", QuestionViewSet, basename="question")
+router.register('', QuestionViewSet, basename='question')
 
 urlpatterns = [
-    path("daily/", daily_questions, name="daily-questions"),
+    path('daily/', daily_questions, name='daily-questions'),
 ] + router.urls
