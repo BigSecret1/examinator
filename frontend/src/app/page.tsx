@@ -73,8 +73,7 @@ export default function Home() {
               Train Your Brain<span className="text-secondary">.</span>
             </h2>
             <p className="text-text-secondary max-w-md mx-auto">
-              Pick a subject, choose your difficulty, and get 10 fresh AI-generated
-              practice questions every day.
+              A playground to test your knowledge and keep improving every day.
             </p>
           </div>
         )}
