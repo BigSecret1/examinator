@@ -48,7 +48,7 @@ export default function FilterPanel({ subjects, onStart, loading }: Props) {
         {/* Subject dropdown with search */}
         <div className="mb-5" ref={dropdownRef}>
           <label className="block text-sm font-medium text-text-secondary mb-2">
-            Subject / Field
+            Subject
           </label>
           <div className="relative">
             <button
