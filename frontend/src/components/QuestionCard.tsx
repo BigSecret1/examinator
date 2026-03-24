@@ -12,6 +12,8 @@ interface Props {
 export default function QuestionCard({ question, index, total }: Props) {
   const [selected, setSelected] = useState<number | null>(null);
   const revealed = selected !== null;
+  const selectedAnswer = question.answers.find((a) => a.id === selected);
+  const correctAnswer = question.answers.find((a) => a.is_correct);
 
   return (
     <div className="bg-surface rounded-2xl p-6 md:p-8 shadow-xl border border-surface-light/30">
@@ -102,14 +104,27 @@ export default function QuestionCard({ question, index, total }: Props) {
       {revealed && (
         <div
           className={`mt-5 p-4 rounded-xl text-sm font-medium ${
-            question.answers.find((a) => a.id === selected)?.is_correct
+            selectedAnswer?.is_correct
               ? "bg-success/10 text-success border border-success/20"
               : "bg-error/10 text-error border border-error/20"
           }`}
         >
-          {question.answers.find((a) => a.id === selected)?.is_correct
+          {selectedAnswer?.is_correct
             ? "✓ Correct! Well done."
-            : `✗ Incorrect. The correct answer is: ${question.answers.find((a) => a.is_correct)?.text}`}
+            : `✗ Incorrect. The correct answer is: ${correctAnswer?.text}`}
+
+          <div className="mt-2 text-xs text-text-secondary">
+            Your answer: {selectedAnswer?.text}
+          </div>
+
+          {question.explanation && (
+            <div className="mt-3 pt-3 border-t border-current/20 text-text-primary font-normal">
+              <p className="text-xs uppercase tracking-wide text-text-secondary mb-1">
+                Explanation
+              </p>
+              <p>{question.explanation}</p>
+            </div>
+          )}
         </div>
       )}
     </div>

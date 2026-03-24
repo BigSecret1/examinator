@@ -12,6 +12,7 @@ export interface Question {
   subtopic_id: number | null;
   subtopic_name: string | null;
   text: string;
+  explanation: string;
   difficulty: "easy" | "medium" | "hard";
   answers: Answer[];
   created_at: string;
