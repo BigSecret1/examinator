@@ -10,7 +10,7 @@ import yaml
 from django.conf import settings
 from django.db import transaction
 
-from apps.subjects.models import Topic, SubTopic
+from apps.subjects.models import Subject, Topic, SubTopic
 
 BASE_DIR = Path(settings.BASE_DIR)
 SEEDS_DIR = BASE_DIR / 'seeds' / 'data'
@@ -72,6 +72,12 @@ class SeedLoader(ABC):
 
 class SubtopicLoader(SeedLoader):
 
+    def find_subject(self, name):
+        return Subject.objects.filter(name__iexact=name).first()
+
+    def find_topic(self, subject, topic_name):
+        return Topic.objects.filter(subject=subject, name__iexact=topic_name).first()
+
     def validate(self, i, entry):
         """Validate a single entry. Returns (name, description, topic_ref, subject_ref) or None."""
         name = (entry.get('name') or '').strip()
@@ -92,11 +98,6 @@ class SubtopicLoader(SeedLoader):
         return name, description, topic_ref, subject_ref
 
     def persist(self, items):
-        topics_by_key = {
-            (t.subject.name.lower(), t.name.lower()): t
-            for t in Topic.objects.select_related('subject').all()
-        }
-
         for i, entry in enumerate(items, start=1):
             result = self.validate(i, entry)
             if result is None:
@@ -104,7 +105,14 @@ class SubtopicLoader(SeedLoader):
 
             name, description, topic_ref, subject_ref = result
 
-            topic = topics_by_key.get((subject_ref, topic_ref))
+            subject = self.find_subject(subject_ref)
+            if subject is None:
+                self.errors.append(
+                    f'Row {i} ({name}): subject "{subject_ref}" not found in DB'
+                )
+                continue
+
+            topic = self.find_topic(subject, topic_ref)
             if topic is None:
                 self.errors.append(
                     f'Row {i} ({name}): topic "{topic_ref}" under subject "{subject_ref}" not found in DB'
