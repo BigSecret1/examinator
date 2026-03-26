@@ -1,0 +1,11 @@
+- name: Exemptions from GST
+  subject: Goods and Services Tax (GST)
+  description: Categories of goods and services specifically excluded from the levy of tax under Section 11 of the CGST Act.
+
+- name: Input Tax Credit (ITC)
+  subject: Goods and Services Tax (GST)
+  description: The mechanism to claim credit for tax paid on business purchases to avoid the cascading effect of taxes.
+
+- name: Supply under GST
+  subject: Goods and Services Tax (GST)
+  description: The taxable event in GST including the scope of supply, composite and mixed supplies.

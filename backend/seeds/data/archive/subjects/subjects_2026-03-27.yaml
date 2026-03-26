@@ -1,0 +1,60 @@
+- name: General Studies (G.S)
+  description: A comprehensive multidisciplinary subject covering Indian heritage, governance, technology, biodiversity, and global relations.
+- name: Indian Polity and Governance
+  description: The study of the Indian Constitution, political system, Panchayati Raj, public policy, and rights issues.
+- name: Indian History and National Movement
+  description: Covering Ancient, Medieval, and Modern Indian history, with a special focus on the Indian freedom struggle.
+- name: Indian and World Geography
+  description: Physical, social, and economic geography of India and the world.
+- name: Indian Economy
+  description: Economic and social development, poverty, inclusion, demographics, and social sector initiatives in India.
+- name: Environment and Ecology
+  description: General issues on environmental ecology, biodiversity, and climate change that do not require subject specialization.
+- name: General Science
+  description: Everyday observations and foundational concepts in physics, chemistry, and biology common in preliminary exams.
+- name: Current Affairs
+  description: Ongoing significant national and international events, government schemes, and bilateral relations.
+- name: Quantitative Aptitude
+  description: Numerical ability, arithmetic, algebra, geometry, and trigonometry used to test mathematical reasoning.
+- name: Logical Reasoning
+  description: Verbal and non-verbal reasoning, including puzzles, seating arrangements, syllogisms, and blood relations.
+- name: Data Interpretation
+  description: Analyzing and extracting information from charts, graphs, and tables (crucial for Banking and CAT exams).
+- name: English Comprehension
+  description: Vocabulary, grammar, error detection, and reading comprehension for competitive language proficiency.
+- name: Hindi Language
+  description: Grammar (Vyakaran), vocabulary, and comprehension for State PSCs and specific central exams.
+- name: Static GK
+  description: Unchanging factual knowledge regarding firsts in India/world, headquarters, capitals, currencies, and awards.
+- name: Computer Awareness
+  description: Basics of computers, hardware/software, internet, and MS Office, widely tested in Banking and SSC exams.
+- name: Banking and Financial Awareness
+  description: Knowledge of the Indian banking sector, RBI guidelines, monetary policy, and financial markets.
+- name: Taxation and GST
+  description: Principles of Indian tax structure, Goods and Services Tax framework, and revenue administration.
+- name: Art and Culture
+  description: Salient aspects of art forms, literature, and architecture from ancient to modern times in India.
+- name: Ethics, Integrity and Aptitude
+  description: Examining the candidate’s attitude and approach to issues relating to integrity, probity in public life, and problem-solving.
+- name: Database Management Systems
+  description: Core technical subject covering relational algebra, SQL, and normalization (common in GATE and IT Officer exams).
+- name: Data Structures and Algorithms
+  description: Fundamental programming constructs and problem-solving techniques for technical competitive exams.
+- name: Computer Networks
+  description: OSI model, TCP/IP, routing, and network security concepts for technical recruitment.
+- name: Operating Systems
+  description: Process management, memory management, and file systems for IT and engineering exams.
+- name: Physics
+  description: Core physical science concepts required for engineering (JEE), medical (NEET), and defense (NDA) exams.
+- name: Chemistry
+  description: Organic, inorganic, and physical chemistry for technical, medical, and scientific officer exams.
+- name: Biology
+  description: Botany and zoology, essential for medical entrance exams and general science sections.
+- name: Child Development and Pedagogy
+  description: Educational psychology and teaching methodologies, mandatory for teaching eligibility tests (CTET/TET).
+- name: Legal Aptitude
+  description: Basic legal principles, torts, contracts, and constitutional law for law entrance exams (CLAT).
+- name: Accountancy
+  description: Principles of accounting, financial statements, and auditing for commerce-based exams (CA, EPFO).
+- name: Engineering Mathematics
+  description: Advanced calculus, linear algebra, and probability specifically for engineering competitive exams like GATE.

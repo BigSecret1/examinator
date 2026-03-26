@@ -70,6 +70,52 @@ class SeedLoader(ABC):
         print()
 
 
+class TopicLoader(SeedLoader):
+
+    def find_subject(self, name):
+        return Subject.objects.filter(name__iexact=name).first()
+
+    def validate(self, i, entry):
+        """Validate a single entry. Returns (name, description, subject_ref) or None."""
+        name = (entry.get('name') or '').strip()
+        description = (entry.get('description') or '').strip()
+        subject_ref = (entry.get('subject') or '').strip().lower()
+
+        if not name:
+            self.errors.append(f'Row {i}: missing "name"')
+            return None
+        if not subject_ref:
+            self.errors.append(f'Row {i} ({name}): missing "subject"')
+            return None
+
+        return name, description, subject_ref
+
+    def persist(self, items):
+        for i, entry in enumerate(items, start=1):
+            result = self.validate(i, entry)
+            if result is None:
+                continue
+
+            name, description, subject_ref = result
+
+            subject = self.find_subject(subject_ref)
+            if subject is None:
+                self.errors.append(
+                    f'Row {i} ({name}): subject "{subject_ref}" not found in DB'
+                )
+                continue
+
+            _, was_created = Topic.objects.update_or_create(
+                subject=subject,
+                name=name,
+                defaults={'description': description},
+            )
+            if was_created:
+                self.created += 1
+            else:
+                self.updated += 1
+
+
 class SubtopicLoader(SeedLoader):
 
     def find_subject(self, name):
@@ -131,4 +177,5 @@ class SubtopicLoader(SeedLoader):
 
 
 def load_all():
+    TopicLoader(SEEDS_DIR / 'topics.yaml').load()
     SubtopicLoader(SEEDS_DIR / 'subtopics.yaml').load()

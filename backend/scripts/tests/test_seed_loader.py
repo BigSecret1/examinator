@@ -8,7 +8,7 @@ from unittest.mock import patch, mock_open, MagicMock
 
 import yaml
 
-from scripts.seed_loader import read_file, SubtopicLoader
+from scripts.seed_loader import read_file, SubtopicLoader, TopicLoader
 
 
 class TestReadFile(TestCase):
@@ -200,3 +200,143 @@ class TestSubtopicLoaderPersist(TestCase):
         self.assertEqual(len(loader.errors), 1)
         self.assertIn('topic "nonexistent" under subject "history" not found in DB', loader.errors[0])
         mock_subtopic_cls.objects.update_or_create.assert_not_called()
+
+
+class TestTopicLoaderValidate(TestCase):
+    """Unit tests for TopicLoader.validate()."""
+
+    def setUp(self):
+        self.loader = TopicLoader.__new__(TopicLoader)
+        self.loader.errors = []
+
+    def test_missing_name_returns_none(self):
+        result = self.loader.validate(1, {'subject': 'history'})
+        self.assertIsNone(result)
+        self.assertEqual(len(self.loader.errors), 1)
+        self.assertIn('missing "name"', self.loader.errors[0])
+
+    def test_missing_subject_returns_none(self):
+        result = self.loader.validate(1, {'name': 'Ancient'})
+        self.assertIsNone(result)
+        self.assertIn('missing "subject"', self.loader.errors[0])
+
+    def test_valid_entry_returns_tuple(self):
+        entry = {
+            'name': '  Ancient  ',
+            'description': '  Desc  ',
+            'subject': '  History  '
+        }
+        result = self.loader.validate(1, entry)
+        self.assertEqual(result, ('Ancient', 'Desc', 'history'))
+        self.assertEqual(len(self.loader.errors), 0)
+
+
+class TestTopicLoaderFindSubject(TestCase):
+    """Unit tests for TopicLoader.find_subject()."""
+
+    @patch('scripts.seed_loader.Subject')
+    def test_returns_subject_when_exists(self, mock_subject_cls):
+        mock_subject = MagicMock()
+        mock_subject_cls.objects.filter.return_value.first.return_value = mock_subject
+
+        loader = TopicLoader.__new__(TopicLoader)
+        result = loader.find_subject('history')
+
+        self.assertEqual(result, mock_subject)
+        mock_subject_cls.objects.filter.assert_called_once_with(name__iexact='history')
+
+    @patch('scripts.seed_loader.Subject')
+    def test_returns_none_when_not_exists(self, mock_subject_cls):
+        mock_subject_cls.objects.filter.return_value.first.return_value = None
+
+        loader = TopicLoader.__new__(TopicLoader)
+        result = loader.find_subject('nonexistent')
+
+        self.assertIsNone(result)
+
+
+class TestTopicLoaderPersist(TestCase):
+    """Unit tests for TopicLoader.persist() — DB fully mocked."""
+
+    @patch('scripts.seed_loader.Topic')
+    def test_persist_creates_topic(self, mock_topic_cls):
+        mock_subject = MagicMock()
+        mock_topic_cls.objects.update_or_create.return_value = (MagicMock(), True)
+
+        loader = TopicLoader.__new__(TopicLoader)
+        loader.created = 0
+        loader.updated = 0
+        loader.errors = []
+        loader.find_subject = MagicMock(return_value=mock_subject)
+
+        items = [{
+            'name': 'Ancient',
+            'description': 'Desc',
+            'subject': 'history'
+        }]
+        loader.persist(items)
+
+        self.assertEqual(loader.created, 1)
+        self.assertEqual(loader.updated, 0)
+        loader.find_subject.assert_called_once_with('history')
+        mock_topic_cls.objects.update_or_create.assert_called_once_with(
+            subject=mock_subject,
+            name='Ancient',
+            defaults={'description': 'Desc'},
+        )
+
+    @patch('scripts.seed_loader.Topic')
+    def test_persist_updates_existing_topic(self, mock_topic_cls):
+        mock_subject = MagicMock()
+        mock_topic_cls.objects.update_or_create.return_value = (MagicMock(), False)
+
+        loader = TopicLoader.__new__(TopicLoader)
+        loader.created = 0
+        loader.updated = 0
+        loader.errors = []
+        loader.find_subject = MagicMock(return_value=mock_subject)
+
+        items = [{
+            'name': 'Ancient',
+            'description': 'Updated desc',
+            'subject': 'history'
+        }]
+        loader.persist(items)
+
+        self.assertEqual(loader.created, 0)
+        self.assertEqual(loader.updated, 1)
+
+    @patch('scripts.seed_loader.Topic')
+    def test_persist_records_error_for_missing_subject(self, mock_topic_cls):
+        loader = TopicLoader.__new__(TopicLoader)
+        loader.created = 0
+        loader.updated = 0
+        loader.errors = []
+        loader.find_subject = MagicMock(return_value=None)
+
+        items = [{
+            'name': 'Ancient',
+            'description': 'Desc',
+            'subject': 'nonexistent'
+        }]
+        loader.persist(items)
+
+        self.assertEqual(loader.created, 0)
+        self.assertEqual(len(loader.errors), 1)
+        self.assertIn('subject "nonexistent" not found in DB', loader.errors[0])
+        mock_topic_cls.objects.update_or_create.assert_not_called()
+
+    @patch('scripts.seed_loader.Topic')
+    def test_persist_skips_invalid_entries(self, mock_topic_cls):
+        loader = TopicLoader.__new__(TopicLoader)
+        loader.created = 0
+        loader.updated = 0
+        loader.errors = []
+        loader.find_subject = MagicMock()
+
+        items = [{'description': 'no name or subject'}]
+        loader.persist(items)
+
+        self.assertEqual(loader.created, 0)
+        self.assertEqual(loader.updated, 0)
+        mock_topic_cls.objects.update_or_create.assert_not_called()
