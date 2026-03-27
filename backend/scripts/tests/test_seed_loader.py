@@ -8,7 +8,7 @@ from unittest.mock import patch, mock_open, MagicMock
 
 import yaml
 
-from scripts.seed_loader import read_file, SubtopicLoader, TopicLoader
+from scripts.seed_loader import read_file, SubjectLoader, SubtopicLoader, TopicLoader
 
 
 class TestReadFile(TestCase):
@@ -37,6 +37,87 @@ class TestReadFile(TestCase):
         with patch('builtins.open', mock_open(read_data=yaml_content)):
             result = read_file(Path('/fake/path.yaml'))
         self.assertEqual(result, [{'name': 'Test'}])
+
+
+class TestSubjectLoaderValidate(TestCase):
+    """Unit tests for SubjectLoader.validate()."""
+
+    def setUp(self):
+        self.loader = SubjectLoader.__new__(SubjectLoader)
+        self.loader.errors = []
+
+    def test_missing_name_returns_none(self):
+        result = self.loader.validate(1, {'description': 'desc'})
+        self.assertIsNone(result)
+        self.assertEqual(len(self.loader.errors), 1)
+        self.assertIn('missing "name"', self.loader.errors[0])
+
+    def test_valid_entry_returns_tuple(self):
+        entry = {
+            'name': '  History  ',
+            'description': '  Desc  ',
+        }
+        result = self.loader.validate(1, entry)
+        self.assertEqual(result, ('History', 'Desc'))
+        self.assertEqual(len(self.loader.errors), 0)
+
+
+class TestSubjectLoaderPersist(TestCase):
+    """Unit tests for SubjectLoader.persist() - DB fully mocked."""
+
+    @patch('scripts.seed_loader.Subject')
+    def test_persist_creates_subject(self, mock_subject_cls):
+        mock_subject_cls.objects.update_or_create.return_value = (MagicMock(), True)
+
+        loader = SubjectLoader.__new__(SubjectLoader)
+        loader.created = 0
+        loader.updated = 0
+        loader.errors = []
+
+        items = [{
+            'name': 'History',
+            'description': 'Desc',
+        }]
+        loader.persist(items)
+
+        self.assertEqual(loader.created, 1)
+        self.assertEqual(loader.updated, 0)
+        mock_subject_cls.objects.update_or_create.assert_called_once_with(
+            name='History',
+            defaults={'description': 'Desc'},
+        )
+
+    @patch('scripts.seed_loader.Subject')
+    def test_persist_updates_existing_subject(self, mock_subject_cls):
+        mock_subject_cls.objects.update_or_create.return_value = (MagicMock(), False)
+
+        loader = SubjectLoader.__new__(SubjectLoader)
+        loader.created = 0
+        loader.updated = 0
+        loader.errors = []
+
+        items = [{
+            'name': 'History',
+            'description': 'Updated desc',
+        }]
+        loader.persist(items)
+
+        self.assertEqual(loader.created, 0)
+        self.assertEqual(loader.updated, 1)
+
+    @patch('scripts.seed_loader.Subject')
+    def test_persist_skips_invalid_entries(self, mock_subject_cls):
+        loader = SubjectLoader.__new__(SubjectLoader)
+        loader.created = 0
+        loader.updated = 0
+        loader.errors = []
+
+        items = [{'description': 'no name'}]
+        loader.persist(items)
+
+        self.assertEqual(loader.created, 0)
+        self.assertEqual(loader.updated, 0)
+        mock_subject_cls.objects.update_or_create.assert_not_called()
 
 
 class TestSubtopicLoaderValidate(TestCase):

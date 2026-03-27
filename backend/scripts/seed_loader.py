@@ -70,6 +70,36 @@ class SeedLoader(ABC):
         print()
 
 
+class SubjectLoader(SeedLoader):
+
+    def validate(self, i, entry):
+        """Validate a single entry. Returns (name, description) or None."""
+        name = (entry.get('name') or '').strip()
+        description = (entry.get('description') or '').strip()
+
+        if not name:
+            self.errors.append(f'Row {i}: missing "name"')
+            return None
+
+        return name, description
+
+    def persist(self, items):
+        for i, entry in enumerate(items, start=1):
+            result = self.validate(i, entry)
+            if result is None:
+                continue
+
+            name, description = result
+            _, was_created = Subject.objects.update_or_create(
+                name=name,
+                defaults={'description': description},
+            )
+            if was_created:
+                self.created += 1
+            else:
+                self.updated += 1
+
+
 class TopicLoader(SeedLoader):
 
     def find_subject(self, name):
@@ -177,5 +207,6 @@ class SubtopicLoader(SeedLoader):
 
 
 def load_all():
+    SubjectLoader(SEEDS_DIR / 'subjects.yaml').load()
     TopicLoader(SEEDS_DIR / 'topics.yaml').load()
     SubtopicLoader(SEEDS_DIR / 'subtopics.yaml').load()
