@@ -36,12 +36,12 @@ services:
     depends_on:
       - db
 
-  frontend:
-    build: ./frontend
+  examinator-web:
+    build: ./examinator-web
     restart: unless-stopped
     command: npm run dev
     volumes:
-      - ./frontend:/app
+      - ./examinator-web:/app
       - /app/node_modules
     ports:
       - "3000:3000"

@@ -16,13 +16,13 @@ Thumbs.db
 !.env.example
 
 # ──────────────────────────────────────────────
-# Next.js (frontend/)
+# Next.js (examinator-web/)
 # ──────────────────────────────────────────────
-frontend/.next/
-frontend/out/
-frontend/node_modules/
-frontend/.npm
-frontend/.eslintcache
+examinator-web/.next/
+examinator-web/out/
+examinator-web/node_modules/
+examinator-web/.npm
+examinator-web/.eslintcache
 
 # ──────────────────────────────────────────────
 # Django / Python (backend/)

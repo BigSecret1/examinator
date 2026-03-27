@@ -57,7 +57,7 @@ services:
     name: examinator-frontend
     runtime: node
     plan: free
-    rootDir: frontend
+    rootDir: examinator-web
     buildCommand: npm install && npm run build
     startCommand: npm run start
     envVars:
