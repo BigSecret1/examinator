@@ -35,8 +35,8 @@ class SeedLoader(ABC):
 
     def __init__(self, yaml_path):
         self.yaml_path = yaml_path
-        self.created = 0
-        self.updated = 0
+        self.created = []
+        self.updated = []
         self.errors = []
 
     def load(self):
@@ -59,14 +59,20 @@ class SeedLoader(ABC):
     def report(self):
         label = self.yaml_path.stem
         print(f'\n{label} sync complete:')
-        print(f'  Created : {self.created}')
-        print(f'  Updated : {self.updated}')
-        if self.errors:
-            print(f'  Errors  : {len(self.errors)}')
-            for e in self.errors:
-                print(f'    - {e}')
-        else:
-            print(f'  Errors  : 0')
+
+        print(f'  Created  : {len(self.created)}')
+        for e in self.created:
+            print(f'    - {e}')
+        print()
+
+        print(f'  Updated  : {len(self.updated)}')
+        for e in self.updated:
+            print(f'    - {e}')
+        print()
+
+        print(f'  Errors  : {len(self.errors)}')
+        for e in self.errors:
+            print(f'    - {e}')
         print()
 
 
@@ -95,9 +101,9 @@ class SubjectLoader(SeedLoader):
                 defaults={'description': description},
             )
             if was_created:
-                self.created += 1
+                self.created.append(name)
             else:
-                self.updated += 1
+                self.updated.append(name)
 
 
 class TopicLoader(SeedLoader):
@@ -141,9 +147,9 @@ class TopicLoader(SeedLoader):
                 defaults={'description': description},
             )
             if was_created:
-                self.created += 1
+                self.created.append(name)
             else:
-                self.updated += 1
+                self.updated.append(name)
 
 
 class SubtopicLoader(SeedLoader):
@@ -201,9 +207,9 @@ class SubtopicLoader(SeedLoader):
                 defaults={'description': description},
             )
             if was_created:
-                self.created += 1
+                self.created.append(name)
             else:
-                self.updated += 1
+                self.updated.append(name)
 
 
 def load_all():
