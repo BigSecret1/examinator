@@ -70,8 +70,8 @@ class TestSubjectLoaderPersist(TestCase):
         mock_subject_cls.objects.update_or_create.return_value = (MagicMock(), True)
 
         loader = SubjectLoader.__new__(SubjectLoader)
-        loader.created = 0
-        loader.updated = 0
+        loader.created = []
+        loader.updated = []
         loader.errors = []
 
         items = [{
@@ -80,8 +80,8 @@ class TestSubjectLoaderPersist(TestCase):
         }]
         loader.persist(items)
 
-        self.assertEqual(loader.created, 1)
-        self.assertEqual(loader.updated, 0)
+        self.assertEqual(loader.created, ['History'])
+        self.assertEqual(loader.updated, [])
         mock_subject_cls.objects.update_or_create.assert_called_once_with(
             name='History',
             defaults={'description': 'Desc'},
@@ -92,8 +92,8 @@ class TestSubjectLoaderPersist(TestCase):
         mock_subject_cls.objects.update_or_create.return_value = (MagicMock(), False)
 
         loader = SubjectLoader.__new__(SubjectLoader)
-        loader.created = 0
-        loader.updated = 0
+        loader.created = []
+        loader.updated = []
         loader.errors = []
 
         items = [{
@@ -102,21 +102,21 @@ class TestSubjectLoaderPersist(TestCase):
         }]
         loader.persist(items)
 
-        self.assertEqual(loader.created, 0)
-        self.assertEqual(loader.updated, 1)
+        self.assertEqual(loader.created, [])
+        self.assertEqual(loader.updated, ['History'])
 
     @patch('scripts.seed_loader.Subject')
     def test_persist_skips_invalid_entries(self, mock_subject_cls):
         loader = SubjectLoader.__new__(SubjectLoader)
-        loader.created = 0
-        loader.updated = 0
+        loader.created = []
+        loader.updated = []
         loader.errors = []
 
         items = [{'description': 'no name'}]
         loader.persist(items)
 
-        self.assertEqual(loader.created, 0)
-        self.assertEqual(loader.updated, 0)
+        self.assertEqual(loader.created, [])
+        self.assertEqual(loader.updated, [])
         mock_subject_cls.objects.update_or_create.assert_not_called()
 
 
@@ -217,8 +217,8 @@ class TestSubtopicLoaderPersist(TestCase):
         mock_subtopic_cls.objects.update_or_create.return_value = (MagicMock(), True)
 
         loader = SubtopicLoader.__new__(SubtopicLoader)
-        loader.created = 0
-        loader.updated = 0
+        loader.created = []
+        loader.updated = []
         loader.errors = []
         loader.find_subject = MagicMock(return_value=mock_subject)
         loader.find_topic = MagicMock(return_value=mock_topic)
@@ -231,8 +231,8 @@ class TestSubtopicLoaderPersist(TestCase):
         }]
         loader.persist(items)
 
-        self.assertEqual(loader.created, 1)
-        self.assertEqual(loader.updated, 0)
+        self.assertEqual(loader.created, ['Sub A'])
+        self.assertEqual(loader.updated, [])
         loader.find_subject.assert_called_once_with('history')
         loader.find_topic.assert_called_once_with(mock_subject, 'ancient')
         mock_subtopic_cls.objects.update_or_create.assert_called_once()
@@ -240,8 +240,8 @@ class TestSubtopicLoaderPersist(TestCase):
     @patch('scripts.seed_loader.SubTopic')
     def test_persist_records_error_for_missing_subject(self, mock_subtopic_cls):
         loader = SubtopicLoader.__new__(SubtopicLoader)
-        loader.created = 0
-        loader.updated = 0
+        loader.created = []
+        loader.updated = []
         loader.errors = []
         loader.find_subject = MagicMock(return_value=None)
 
@@ -253,7 +253,7 @@ class TestSubtopicLoaderPersist(TestCase):
         }]
         loader.persist(items)
 
-        self.assertEqual(loader.created, 0)
+        self.assertEqual(loader.created, [])
         self.assertEqual(len(loader.errors), 1)
         self.assertIn('subject "nonexistent" not found in DB', loader.errors[0])
         mock_subtopic_cls.objects.update_or_create.assert_not_called()
@@ -263,8 +263,8 @@ class TestSubtopicLoaderPersist(TestCase):
         mock_subject = MagicMock()
 
         loader = SubtopicLoader.__new__(SubtopicLoader)
-        loader.created = 0
-        loader.updated = 0
+        loader.created = []
+        loader.updated = []
         loader.errors = []
         loader.find_subject = MagicMock(return_value=mock_subject)
         loader.find_topic = MagicMock(return_value=None)
@@ -277,7 +277,7 @@ class TestSubtopicLoaderPersist(TestCase):
         }]
         loader.persist(items)
 
-        self.assertEqual(loader.created, 0)
+        self.assertEqual(loader.created, [])
         self.assertEqual(len(loader.errors), 1)
         self.assertIn('topic "nonexistent" under subject "history" not found in DB', loader.errors[0])
         mock_subtopic_cls.objects.update_or_create.assert_not_called()
@@ -345,8 +345,8 @@ class TestTopicLoaderPersist(TestCase):
         mock_topic_cls.objects.update_or_create.return_value = (MagicMock(), True)
 
         loader = TopicLoader.__new__(TopicLoader)
-        loader.created = 0
-        loader.updated = 0
+        loader.created = []
+        loader.updated = []
         loader.errors = []
         loader.find_subject = MagicMock(return_value=mock_subject)
 
@@ -357,8 +357,8 @@ class TestTopicLoaderPersist(TestCase):
         }]
         loader.persist(items)
 
-        self.assertEqual(loader.created, 1)
-        self.assertEqual(loader.updated, 0)
+        self.assertEqual(loader.created, ['Ancient'])
+        self.assertEqual(loader.updated, [])
         loader.find_subject.assert_called_once_with('history')
         mock_topic_cls.objects.update_or_create.assert_called_once_with(
             subject=mock_subject,
@@ -372,8 +372,8 @@ class TestTopicLoaderPersist(TestCase):
         mock_topic_cls.objects.update_or_create.return_value = (MagicMock(), False)
 
         loader = TopicLoader.__new__(TopicLoader)
-        loader.created = 0
-        loader.updated = 0
+        loader.created = []
+        loader.updated = []
         loader.errors = []
         loader.find_subject = MagicMock(return_value=mock_subject)
 
@@ -384,14 +384,14 @@ class TestTopicLoaderPersist(TestCase):
         }]
         loader.persist(items)
 
-        self.assertEqual(loader.created, 0)
-        self.assertEqual(loader.updated, 1)
+        self.assertEqual(loader.created, [])
+        self.assertEqual(loader.updated, ['Ancient'])
 
     @patch('scripts.seed_loader.Topic')
     def test_persist_records_error_for_missing_subject(self, mock_topic_cls):
         loader = TopicLoader.__new__(TopicLoader)
-        loader.created = 0
-        loader.updated = 0
+        loader.created = []
+        loader.updated = []
         loader.errors = []
         loader.find_subject = MagicMock(return_value=None)
 
@@ -402,7 +402,7 @@ class TestTopicLoaderPersist(TestCase):
         }]
         loader.persist(items)
 
-        self.assertEqual(loader.created, 0)
+        self.assertEqual(loader.created, [])
         self.assertEqual(len(loader.errors), 1)
         self.assertIn('subject "nonexistent" not found in DB', loader.errors[0])
         mock_topic_cls.objects.update_or_create.assert_not_called()
@@ -410,14 +410,14 @@ class TestTopicLoaderPersist(TestCase):
     @patch('scripts.seed_loader.Topic')
     def test_persist_skips_invalid_entries(self, mock_topic_cls):
         loader = TopicLoader.__new__(TopicLoader)
-        loader.created = 0
-        loader.updated = 0
+        loader.created = []
+        loader.updated = []
         loader.errors = []
         loader.find_subject = MagicMock()
 
         items = [{'description': 'no name or subject'}]
         loader.persist(items)
 
-        self.assertEqual(loader.created, 0)
-        self.assertEqual(loader.updated, 0)
+        self.assertEqual(loader.created, [])
+        self.assertEqual(loader.updated, [])
         mock_topic_cls.objects.update_or_create.assert_not_called()
