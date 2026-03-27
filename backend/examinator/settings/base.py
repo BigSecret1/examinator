@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     # Local
     "apps.subjects",
     "apps.questions",
+    "exams"
 ]
 
 MIDDLEWARE = [
