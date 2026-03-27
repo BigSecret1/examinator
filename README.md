@@ -6,11 +6,11 @@
 
 ## Tech Stack
 
-| Layer     | Technology        |
-|-----------|-------------------|
-| Frontend  | Next.js 15 (TypeScript) |
-| Backend   | Django 5 + Django REST Framework |
-| Database  | PostgreSQL 16     |
+| Layer    | Technology                       |
+| -------- | -------------------------------- |
+| Frontend | Next.js 15 (TypeScript)          |
+| Backend  | Django 5 + Django REST Framework |
+| Database | PostgreSQL 16                    |
 
 ## Repository Structure
 
@@ -20,7 +20,7 @@ examinator/
 ├── .gitignore
 ├── docker-compose.yml         # Full-stack local development
 │
-├── frontend/                  # Next.js application
+├── examinator-web/            # Next.js application
 │   ├── public/                # Static assets
 │   ├── src/
 │   │   ├── app/               # Next.js App Router (pages & layouts)
@@ -59,7 +59,7 @@ docker compose up --build
 
 ## Local Development
 
-See [frontend/README.md](frontend/README.md) and [backend/README.md](backend/README.md) for
+See [examinator-web/README.md](examinator-web/README.md) and [backend/README.md](backend/README.md) for
 per-service setup instructions.
 
 ## License
