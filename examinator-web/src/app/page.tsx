@@ -5,39 +5,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import FilterPanel from "@/components/FilterPanel";
-import QuizView from "@/components/QuizView";
-import { getSubjects, getDailyQuestions } from "@/lib/api";
-import type { Subject, Question, Difficulty } from "@/types";
+import Link from "next/link";
 
 export default function Home() {
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [questions, setQuestions] = useState<Question[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [subjectsLoading, setSubjectsLoading] = useState(true);
-
-  useEffect(() => {
-    getSubjects()
-      .then(setSubjects)
-      .catch((e) => setError(e.message))
-      .finally(() => setSubjectsLoading(false));
-  }, []);
-
-  async function handleStart(subjectId: number, topicId: string | number, difficulty: Difficulty, subtopicId: string | number = "all") {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getDailyQuestions(subjectId, topicId, difficulty, subtopicId);
-      setQuestions(data);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Something went wrong.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -58,58 +28,57 @@ export default function Home() {
               Examinator
             </h1>
           </div>
-          <p className="hidden sm:block text-sm text-text-muted">
-            10 new questions every day
-          </p>
         </div>
       </header>
 
       {/* Main */}
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-10">
-        {/* Hero section */}
-        {!questions && (
-          <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">
-              Train Your Brain<span className="text-secondary">.</span>
-            </h2>
-            <p className="text-text-secondary max-w-md mx-auto">
-              A playground to test your knowledge and keep improving every day.
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">
+            Train Your Brain<span className="text-secondary">.</span>
+          </h2>
+          <p className="text-text-secondary max-w-md mx-auto">
+            A playground to test your knowledge and keep improving every day.
+          </p>
+        </div>
+
+        <div className="grid gap-6 max-w-2xl mx-auto md:grid-cols-2">
+          {/* Subject Practice */}
+          <Link
+            href="/practice"
+            className="group bg-surface rounded-2xl p-6 border border-surface-light/30 shadow-xl hover:border-secondary/40 transition-all"
+          >
+            <div className="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center mb-4">
+              <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-text-primary mb-2 group-hover:text-secondary transition-colors">
+              Subject Practice
+            </h3>
+            <p className="text-sm text-text-secondary">
+              Pick a subject, topic, and difficulty to practice daily questions.
             </p>
-          </div>
-        )}
+          </Link>
 
-        {/* Error banner */}
-        {error && (
-          <div className="max-w-2xl mx-auto mb-6 bg-error/10 border border-error/20 text-error text-sm rounded-xl px-5 py-4">
-            {error}
-          </div>
-        )}
-
-        {/* Loading subjects */}
-        {subjectsLoading && (
-          <div className="text-center py-20">
-            <svg className="animate-spin h-8 w-8 mx-auto text-secondary" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-            <p className="mt-4 text-text-muted text-sm">Loading subjects...</p>
-          </div>
-        )}
-
-        {/* Filter panel or Quiz view */}
-        {!subjectsLoading && !questions && (
-          <FilterPanel subjects={subjects} onStart={handleStart} loading={loading} />
-        )}
-
-        {questions && (
-          <QuizView
-            questions={questions}
-            onBack={() => {
-              setQuestions(null);
-              setError(null);
-            }}
-          />
-        )}
+          {/* Exam Practice */}
+          <Link
+            href="/practice/exams"
+            className="group bg-surface rounded-2xl p-6 border border-surface-light/30 shadow-xl hover:border-secondary/40 transition-all"
+          >
+            <div className="w-12 h-12 rounded-xl bg-secondary/15 flex items-center justify-center mb-4">
+              <svg className="w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-text-primary mb-2 group-hover:text-secondary transition-colors">
+              Exam Preparation
+            </h3>
+            <p className="text-sm text-text-secondary">
+              Choose an exam and subject to practice with AI-generated questions.
+            </p>
+          </Link>
+        </div>
       </main>
 
       {/* Footer */}
