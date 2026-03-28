@@ -42,7 +42,7 @@ export default function FilterPanel({ subjects, onStart, loading }: Props) {
     <div className="w-full max-w-2xl mx-auto">
       <div className="bg-surface rounded-2xl p-6 md:p-8 shadow-2xl border border-surface-light/30">
         <h2 className="text-xl font-semibold text-text-primary mb-6">
-          Choose Your Practice
+          Subject Practice Setup
         </h2>
 
         {/* Subject dropdown with search */}

@@ -43,7 +43,7 @@ export default function Home() {
         </div>
 
         <div className="grid gap-6 max-w-2xl mx-auto md:grid-cols-2">
-          {/* Subject Practice */}
+          {/* Practice by Subject */}
           <Link
             href="/practice"
             className="group bg-surface rounded-2xl p-6 border border-surface-light/30 shadow-xl hover:border-secondary/40 transition-all"
@@ -54,14 +54,14 @@ export default function Home() {
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-text-primary mb-2 group-hover:text-secondary transition-colors">
-              Subject Practice
+              Practice by Subject
             </h3>
             <p className="text-sm text-text-secondary">
-              Pick a subject, topic, and difficulty to practice daily questions.
+              Build strong fundamentals by focusing on one subject at a time with targeted question sets.
             </p>
           </Link>
 
-          {/* Exam Practice */}
+          {/* Practice by Exam */}
           <Link
             href="/practice/exams"
             className="group bg-surface rounded-2xl p-6 border border-surface-light/30 shadow-xl hover:border-secondary/40 transition-all"
@@ -72,10 +72,10 @@ export default function Home() {
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-text-primary mb-2 group-hover:text-secondary transition-colors">
-              Exam Preparation
+              Practice by Exam
             </h3>
             <p className="text-sm text-text-secondary">
-              Choose an exam and subject to practice with AI-generated questions.
+              Prepare in exam context with subject-wise questions aligned to your selected exam pattern.
             </p>
           </Link>
         </div>
