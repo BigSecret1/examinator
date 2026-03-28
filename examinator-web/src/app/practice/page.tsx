@@ -58,9 +58,6 @@ export default function Home() {
               Examinator
             </h1>
           </div>
-          <p className="hidden sm:block text-sm text-text-muted">
-            10 new questions every day
-          </p>
         </div>
       </header>
 
@@ -70,10 +67,10 @@ export default function Home() {
         {!questions && (
           <div className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">
-              Train Your Brain<span className="text-secondary">.</span>
+              Practice by Subject<span className="text-secondary">.</span>
             </h2>
             <p className="text-text-secondary max-w-md mx-auto">
-              A playground to test your knowledge and keep improving every day.
+              Build strong fundamentals by focusing on one subject at a time with targeted question sets.
             </p>
           </div>
         )}

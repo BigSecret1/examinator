@@ -45,9 +45,6 @@ export default function ExamsPage() {
               Examinator
             </h1>
           </div>
-          <p className="hidden sm:block text-sm text-text-muted">
-            Exam Practice
-          </p>
         </div>
       </header>
 
@@ -57,8 +54,11 @@ export default function ExamsPage() {
         {!questions && (
           <div className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">
-              Exam Preparation<span className="text-secondary">.</span>
+              Practice by Exam<span className="text-secondary">.</span>
             </h2>
+            <p className="text-text-secondary max-w-md mx-auto">
+              Prepare in exam context with subject-wise questions aligned to your selected exam pattern.
+            </p>
           </div>
         )}
 
