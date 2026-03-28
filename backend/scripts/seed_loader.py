@@ -17,15 +17,17 @@ SEEDS_DIR = BASE_DIR / 'seeds' / 'data'
 
 
 def read_file(path):
-    """Read and validate a YAML seed file. Returns parsed data."""
+    """Read and validate a YAML seed file. Returns parsed data or empty list."""
     if not path.exists():
-        raise FileNotFoundError(f'YAML file not found at {path}')
+        print(f'  ⚠ Skipping {path.name}: file not found at {path}')
+        return []
 
     with open(path, 'r', encoding='utf-8') as f:
         data = yaml.safe_load(f)
 
     if not data or not isinstance(data, list):
-        raise ValueError(f'{path.name}: YAML root must be a list.')
+        print(f'  ⚠ Skipping {path.name}: file is empty or not a YAML list.')
+        return []
 
     return data
 
