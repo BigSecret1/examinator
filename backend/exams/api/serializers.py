@@ -52,3 +52,11 @@ class ExamListSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class ExamDailyQuestionsParamsSerializer(serializers.Serializer):
+    subject = serializers.IntegerField(min_value=1)
+    difficulty = serializers.ChoiceField(
+        choices=['easy', 'medium', 'hard'],
+        default='medium',
+    )
