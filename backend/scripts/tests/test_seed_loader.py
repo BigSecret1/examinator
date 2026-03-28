@@ -15,21 +15,21 @@ class TestReadFile(TestCase):
     """Unit tests for the read_file function."""
 
     @patch.object(Path, 'exists', return_value=False)
-    def test_raises_when_file_not_found(self, _):
-        with self.assertRaises(FileNotFoundError):
-            read_file(Path('/fake/path.yaml'))
+    def test_returns_empty_list_when_file_not_found(self, _):
+        result = read_file(Path('/fake/path.yaml'))
+        self.assertEqual(result, [])
 
     @patch.object(Path, 'exists', return_value=True)
     @patch('builtins.open', mock_open(read_data=''))
-    def test_raises_when_yaml_empty(self, _):
-        with self.assertRaises(ValueError):
-            read_file(Path('/fake/path.yaml'))
+    def test_returns_empty_list_when_yaml_empty(self, _):
+        result = read_file(Path('/fake/path.yaml'))
+        self.assertEqual(result, [])
 
     @patch.object(Path, 'exists', return_value=True)
     @patch('builtins.open', mock_open(read_data='key: value'))
-    def test_raises_when_yaml_root_not_list(self, _):
-        with self.assertRaises(ValueError):
-            read_file(Path('/fake/path.yaml'))
+    def test_returns_empty_list_when_yaml_root_not_list(self, _):
+        result = read_file(Path('/fake/path.yaml'))
+        self.assertEqual(result, [])
 
     @patch.object(Path, 'exists', return_value=True)
     def test_returns_parsed_list(self, _):
