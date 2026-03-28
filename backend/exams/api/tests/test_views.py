@@ -263,3 +263,81 @@ class ExamDailyQuestionsAPIViewErrorTests(APITestCase):
         url = reverse('exam-daily-questions', kwargs={'exam_id': exam.pk})
         with self.assertRaises(Exam.DoesNotExist):
             self.client.get(url, {'subject': subject.pk})
+
+
+class ExamSubjectsAPIViewTests(APITestCase):
+    """Tests for GET /api/exams/<id>/subjects/."""
+
+    def setUp(self):
+        self.exam = Exam.objects.create(
+            name='NEET Subjects', is_active=True,
+        )
+        self.physics, _ = Subject.objects.get_or_create(name='Physics')
+        self.chemistry, _ = Subject.objects.get_or_create(name='Chemistry')
+        self.biology, _ = Subject.objects.get_or_create(name='Biology')
+        ExamSubject.objects.create(
+            exam=self.exam, subject=self.physics, is_optional=False,
+        )
+        ExamSubject.objects.create(
+            exam=self.exam, subject=self.chemistry, is_optional=False,
+        )
+        ExamSubject.objects.create(
+            exam=self.exam, subject=self.biology, is_optional=True,
+        )
+        self.url = reverse('exam-subjects', kwargs={'exam_id': self.exam.pk})
+
+    def test_returns_200(self):
+        response = self.client.get(self.url)
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_returns_all_linked_subjects(self):
+        response = self.client.get(self.url)
+        assert len(response.data) == 3
+
+    def test_response_contains_expected_fields(self):
+        response = self.client.get(self.url)
+        item = response.data[0]
+        assert set(item.keys()) == {'id', 'subject_id', 'subject_name', 'is_optional'}
+
+    def test_subject_id_and_name_are_correct(self):
+        response = self.client.get(self.url)
+        subject_names = {s['subject_name'] for s in response.data}
+        assert subject_names == {'Physics', 'Chemistry', 'Biology'}
+
+    def test_is_optional_flag_is_correct(self):
+        response = self.client.get(self.url)
+        by_name = {s['subject_name']: s for s in response.data}
+        assert by_name['Physics']['is_optional'] is False
+        assert by_name['Biology']['is_optional'] is True
+
+    def test_no_topics_or_subtopics_in_response(self):
+        """Response should be lightweight — no nested topics."""
+        response = self.client.get(self.url)
+        item = response.data[0]
+        assert 'topics' not in item
+        assert 'subtopics' not in item
+        assert 'description' not in item
+
+    def test_nonexistent_exam_raises_exception(self):
+        url = reverse('exam-subjects', kwargs={'exam_id': 99999})
+        with self.assertRaises(Exam.DoesNotExist):
+            self.client.get(url)
+
+    def test_inactive_exam_raises_exception(self):
+        self.exam.is_active = False
+        self.exam.save()
+        with self.assertRaises(Exam.DoesNotExist):
+            self.client.get(self.url)
+
+    def test_exam_with_no_subjects_returns_empty(self):
+        empty_exam = Exam.objects.create(name='Empty Exam', is_active=True)
+        url = reverse('exam-subjects', kwargs={'exam_id': empty_exam.pk})
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == []
+
+    def test_only_get_method_allowed(self):
+        assert self.client.post(self.url).status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        assert self.client.put(self.url).status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        assert self.client.patch(self.url).status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        assert self.client.delete(self.url).status_code == status.HTTP_405_METHOD_NOT_ALLOWED
