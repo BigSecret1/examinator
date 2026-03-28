@@ -6,15 +6,10 @@ from ..models import Exam, ExamSubject
 
 class ExamSubjectSerializer(serializers.ModelSerializer):
     subject = SubjectSerializer(read_only=True)
-    subject_id = serializers.PrimaryKeyRelatedField(
-        queryset=SubjectSerializer.Meta.model.objects.all(),
-        source='subject',
-        write_only=True,
-    )
 
     class Meta:
         model = ExamSubject
-        fields = ['id', 'subject', 'subject_id', 'is_optional', 'created_at']
+        fields = ['id', 'subject', 'is_optional', 'created_at']
         read_only_fields = ['id', 'created_at']
 
 
