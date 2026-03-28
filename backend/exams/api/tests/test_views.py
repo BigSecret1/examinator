@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -132,3 +134,132 @@ class ExamReadOnlyTests(APITestCase):
     def test_delete_not_allowed(self):
         response = self.client.delete(self.detail_url)
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+
+class ExamSubjectQuestionAPIViewParamTests(APITestCase):
+    """Tests for param validation on GET /api/exams/<id>/daily-questions/."""
+
+    def setUp(self):
+        self.subject, _ = Subject.objects.get_or_create(name='Physics')
+        self.exam = Exam.objects.create(name='NEET', is_active=True)
+        ExamSubject.objects.create(exam=self.exam, subject=self.subject)
+        self.url = reverse(
+            'exam-daily-questions', kwargs={'exam_id': self.exam.pk}
+        )
+
+    def test_missing_subject_returns_400(self):
+        response = self.client.get(self.url)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'subject' in response.data
+
+    def test_invalid_subject_type_returns_400(self):
+        response = self.client.get(self.url, {'subject': 'abc'})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_subject_below_min_value_returns_400(self):
+        response = self.client.get(self.url, {'subject': 0})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_invalid_difficulty_returns_400(self):
+        response = self.client.get(
+            self.url, {'subject': self.subject.pk, 'difficulty': 'extreme'}
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_difficulty_defaults_to_medium(self):
+        """When difficulty is omitted, serializer should default to medium."""
+        from exams.api.serializers import ExamDailyQuestionsParamsSerializer
+
+        ser = ExamDailyQuestionsParamsSerializer(
+            data={'subject': str(self.subject.pk)}
+        )
+        assert ser.is_valid()
+        assert ser.validated_data['difficulty'] == 'medium'
+
+    def test_only_get_method_allowed(self):
+        data = {'subject': self.subject.pk}
+        assert self.client.post(self.url, data).status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        assert self.client.put(self.url, data).status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        assert self.client.patch(self.url, data).status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        assert self.client.delete(self.url).status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+
+class ExamSubjectQuestionAPIViewSuccessTests(APITestCase):
+    """Tests for successful daily-questions generation."""
+
+    def setUp(self):
+        self.subject, _ = Subject.objects.get_or_create(name='Physics')
+        self.exam = Exam.objects.create(name='NEET Success', is_active=True)
+        ExamSubject.objects.create(exam=self.exam, subject=self.subject)
+        self.url = reverse(
+            'exam-daily-questions', kwargs={'exam_id': self.exam.pk}
+        )
+
+    @patch('exams.api.actions.GeminiClientInterface.generate')
+    def test_returns_200_with_questions(self, mock_generate):
+        mock_generate.return_value = {
+            'status': 'success',
+            'questions': [
+                {
+                    'text': 'What is Newton\'s first law?',
+                    'explanation': 'An object at rest stays at rest.',
+                    'answers': [
+                        {'text': 'Inertia', 'is_correct': True},
+                        {'text': 'Gravity', 'is_correct': False},
+                        {'text': 'Friction', 'is_correct': False},
+                        {'text': 'Momentum', 'is_correct': False},
+                    ],
+                },
+            ],
+        }
+
+        response = self.client.get(
+            self.url, {'subject': self.subject.pk, 'difficulty': 'easy'}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 1
+        assert response.data[0]['text'] == 'What is Newton\'s first law?'
+
+    @patch('exams.api.actions.GeminiClientInterface.generate')
+    def test_passes_difficulty_to_action(self, mock_generate):
+        mock_generate.return_value = {
+            'status': 'success',
+            'questions': [
+                {
+                    'text': 'Hard question',
+                    'explanation': 'Explanation',
+                    'answers': [
+                        {'text': 'A', 'is_correct': True},
+                        {'text': 'B', 'is_correct': False},
+                        {'text': 'C', 'is_correct': False},
+                        {'text': 'D', 'is_correct': False},
+                    ],
+                },
+            ],
+        }
+
+        response = self.client.get(
+            self.url, {'subject': self.subject.pk, 'difficulty': 'hard'}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        # Verify the prompt included 'hard'
+        call_args = mock_generate.call_args
+        assert 'hard' in call_args.kwargs['prompt']
+
+
+class ExamSubjectQuestionAPIViewErrorTests(APITestCase):
+    """Tests for error scenarios in daily-questions endpoint."""
+
+    def test_nonexistent_exam_raises_exception(self):
+        url = reverse('exam-daily-questions', kwargs={'exam_id': 99999})
+        with self.assertRaises(Exam.DoesNotExist):
+            self.client.get(url, {'subject': 1})
+
+    def test_inactive_exam_raises_exception(self):
+        subject, _ = Subject.objects.get_or_create(name='Physics')
+        exam = Exam.objects.create(name='Inactive Exam', is_active=False)
+        url = reverse('exam-daily-questions', kwargs={'exam_id': exam.pk})
+        with self.assertRaises(Exam.DoesNotExist):
+            self.client.get(url, {'subject': subject.pk})
