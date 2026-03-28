@@ -57,11 +57,8 @@ export default function ExamsPage() {
         {!questions && (
           <div className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">
-              Exam Prep<span className="text-secondary">.</span>
+              Exam Preparation<span className="text-secondary">.</span>
             </h2>
-            <p className="text-text-secondary max-w-md mx-auto">
-              Pick your exam, choose a subject, and practice with AI-generated questions.
-            </p>
           </div>
         )}
 

@@ -134,12 +134,8 @@ export default function ExamFilterPanel({ onStart, loading }: Props) {
                 onClick={() => setDifficulty(d)}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-medium capitalize transition-all ${
                   difficulty === d
-                    ? d === "easy"
-                      ? "bg-success/20 text-success border border-success/30"
-                      : d === "medium"
-                      ? "bg-warning/20 text-warning border border-warning/30"
-                      : "bg-error/20 text-error border border-error/30"
-                    : "bg-surface-light text-text-muted border border-surface-lighter hover:border-surface-lighter/80"
+                    ? "bg-accent/20 text-accent-light border border-accent/30"
+                    : "bg-surface-light border border-surface-lighter text-text-secondary hover:border-surface-lighter hover:text-text-primary"
                 }`}
               >
                 {d}
@@ -160,10 +156,10 @@ export default function ExamFilterPanel({ onStart, loading }: Props) {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Generating Questions...
+              Preparing Question Set...
             </span>
           ) : (
-            "Generate Questions"
+            "Start Practice"
           )}
         </button>
       </form>
