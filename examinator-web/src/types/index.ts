@@ -43,3 +43,23 @@ export interface Subject {
 }
 
 export type Difficulty = "easy" | "medium" | "hard";
+
+export interface Exam {
+  id: number;
+  name: string;
+  description: string;
+  country: string;
+  conducting_body: string;
+  frequency: string;
+  official_url: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExamSubject {
+  id: number;
+  subject_id: number;
+  subject_name: string;
+  is_optional: boolean;
+}

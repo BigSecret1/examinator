@@ -11,7 +11,7 @@ async function fetchJSON<T>(url: string): Promise<T> {
 
 export async function getSubjects() {
   const data = await fetchJSON<{ results: import("@/types").Subject[] }>(
-    `${API_URL}/subjects/`
+    `${API_URL}/subjects/`,
   );
   return data.results;
 }
@@ -20,7 +20,7 @@ export async function getDailyQuestions(
   subjectId: number,
   topicId: string | number,
   difficulty: string,
-  subtopicId: string | number = "all"
+  subtopicId: string | number = "all",
 ) {
   const params = new URLSearchParams({
     subject: String(subjectId),
@@ -29,7 +29,34 @@ export async function getDailyQuestions(
     subtopic: String(subtopicId),
   });
   const data = await fetchJSON<import("@/types").Question[]>(
-    `${API_URL}/questions/daily/?${params}`
+    `${API_URL}/questions/daily/?${params}`,
   );
   return data;
+}
+
+export async function getExams() {
+  const data = await fetchJSON<{ results: import("@/types").Exam[] }>(
+    `${API_URL}/exams/`,
+  );
+  return data.results;
+}
+
+export async function getExamSubjects(examId: number) {
+  return fetchJSON<import("@/types").ExamSubject[]>(
+    `${API_URL}/exams/${examId}/subjects/`,
+  );
+}
+
+export async function getExamDailyQuestions(
+  examId: number,
+  subjectId: number,
+  difficulty: string,
+) {
+  const params = new URLSearchParams({
+    subject: String(subjectId),
+    difficulty,
+  });
+  return fetchJSON<import("@/types").Question[]>(
+    `${API_URL}/exams/${examId}/daily-questions/?${params}`,
+  );
 }
