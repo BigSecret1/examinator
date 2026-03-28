@@ -8,7 +8,7 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
-class GeminiClient:
+class GeminiClientAction:
     DEFAULT_MODELS = [
         'gemini-2.5-flash',
         'gemini-2.0-flash',
