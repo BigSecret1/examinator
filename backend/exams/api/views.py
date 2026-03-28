@@ -22,6 +22,13 @@ class ExamViewSet(viewsets.ReadOnlyModelViewSet):
         return ExamSerializer
 
 
+class ExamSubjectsAPIView(APIView):
+
+    def get(self, request, exam_id):
+        data = ExamAPIAction.get_exam_subjects(exam_id)
+        return Response(data)
+
+
 class ExamDailyQuestionsAPIView(APIView):
 
     def get(self, request, exam_id):

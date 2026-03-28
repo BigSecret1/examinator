@@ -54,6 +54,15 @@ class ExamListSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
+class ExamSubjectListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for subject picker — no topics/subtopics."""
+    subject_name = serializers.CharField(source='subject.name')
+
+    class Meta:
+        model = ExamSubject
+        fields = ['id', 'subject_id', 'subject_name', 'is_optional']
+
+
 class ExamDailyQuestionsParamsSerializer(serializers.Serializer):
     subject = serializers.IntegerField(min_value=1)
     difficulty = serializers.ChoiceField(

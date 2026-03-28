@@ -19,6 +19,13 @@ class ExamAPIAction:
     """Business logic layer for exam-related API operations."""
 
     @staticmethod
+    def get_exam_subjects(exam_id):
+        exam = Exam.objects.get(pk=exam_id, is_active=True)
+        qs = ExamSubject.objects.filter(exam=exam).select_related('subject')
+        from .serializers import ExamSubjectListSerializer
+        return ExamSubjectListSerializer(qs, many=True).data
+
+    @staticmethod
     def validate_exam_subject(exam_id, subject_id):
         exam = Exam.objects.get(pk=exam_id, is_active=True)
         subject = Subject.objects.get(pk=subject_id)
