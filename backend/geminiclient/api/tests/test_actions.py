@@ -93,7 +93,8 @@ class GeminiClientActionGenerateTests(TestCase):
 
         assert result == expected
         mock_model_cls.return_value.generate_content.assert_called_once_with(
-            'test prompt'
+            'test prompt',
+            request_options={'timeout': 60},
         )
 
     @patch('geminiclient.api.actions.time.sleep')
@@ -137,7 +138,7 @@ class GeminiClientActionGenerateTests(TestCase):
 
         # model-a always fails, model-b succeeds
         call_count = {'n': 0}
-        def side_effect(prompt):
+        def side_effect(prompt, **kwargs):
             call_count['n'] += 1
             if call_count['n'] <= 2:  # max_retries for model-a
                 raise RuntimeError('model-a down')

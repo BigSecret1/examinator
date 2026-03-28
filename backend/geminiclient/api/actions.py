@@ -13,8 +13,8 @@ class GeminiClientAction:
         'gemini-2.5-flash',
         'gemini-2.0-flash',
     ]
-    MAX_RETRIES = 5
-    RETRY_DELAYS = [1, 2, 4, 8, 16]
+    MAX_RETRIES = 3
+    RETRY_DELAYS = [1, 2, 4]
 
     def __init__(
             self,
@@ -59,7 +59,10 @@ class GeminiClientAction:
                         'GeminiClient: model=%s attempt=%d',
                         model_name,
                         attempt + 1, )
-                    response = model.generate_content(prompt)
+                    response = model.generate_content(
+                        prompt,
+                        request_options={'timeout': 60},
+                    )
                     return json.loads(response.text)
 
                 except Exception as e:
