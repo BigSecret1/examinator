@@ -136,7 +136,7 @@ class ExamReadOnlyTests(APITestCase):
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
 
-class ExamSubjectQuestionAPIViewParamTests(APITestCase):
+class ExamDailyQuestionsAPIViewParamTests(APITestCase):
     """Tests for param validation on GET /api/exams/<id>/daily-questions/."""
 
     def setUp(self):
@@ -184,7 +184,7 @@ class ExamSubjectQuestionAPIViewParamTests(APITestCase):
         assert self.client.delete(self.url).status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
 
-class ExamSubjectQuestionAPIViewSuccessTests(APITestCase):
+class ExamDailyQuestionsAPIViewSuccessTests(APITestCase):
     """Tests for successful daily-questions generation."""
 
     def setUp(self):
@@ -249,7 +249,7 @@ class ExamSubjectQuestionAPIViewSuccessTests(APITestCase):
         assert 'hard' in call_args.kwargs['prompt']
 
 
-class ExamSubjectQuestionAPIViewErrorTests(APITestCase):
+class ExamDailyQuestionsAPIViewErrorTests(APITestCase):
     """Tests for error scenarios in daily-questions endpoint."""
 
     def test_nonexistent_exam_raises_exception(self):

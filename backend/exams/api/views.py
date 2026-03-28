@@ -22,7 +22,7 @@ class ExamViewSet(viewsets.ReadOnlyModelViewSet):
         return ExamSerializer
 
 
-class ExamSubjectQuestionAPIView(APIView):
+class ExamDailyQuestionsAPIView(APIView):
 
     def get(self, request, exam_id):
         params = ExamDailyQuestionsParamsSerializer(data=request.query_params)
