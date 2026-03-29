@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class GeminiClientAction:
     DEFAULT_MODELS = [
         'gemini-2.5-flash',
-        'gemini-2.0-flash',
+        'gemini-2.5-pro',
     ]
     MAX_RETRIES = 3
     RETRY_DELAYS = [1, 2, 4]
