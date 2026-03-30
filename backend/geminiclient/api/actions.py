@@ -61,7 +61,7 @@ class GeminiClientAction:
                         attempt + 1, )
                     response = model.generate_content(
                         prompt,
-                        request_options={'timeout': 60},
+                        request_options={'timeout': 300},
                     )
                     return json.loads(response.text)
 
