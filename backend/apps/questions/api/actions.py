@@ -90,11 +90,6 @@ def generate_questions(
         subtopic_name: str,
         count: int = 10,
 ) -> dict:
-    '''Call Google Gemini to generate MCQs.
-
-    Returns a dict: {"status": "success"|"invalid_topic", "questions": [...], "message": ""}
-    Raises ValueError if all models and retries are exhausted.
-    '''
     api_key = settings.GEMINI_API_KEY
     if not api_key:
         raise ValueError('GEMINI_API_KEY is not configured in settings.')

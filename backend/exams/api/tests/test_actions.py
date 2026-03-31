@@ -1,11 +1,12 @@
 from unittest.mock import patch
 
 from django.core.cache import cache
+from django.http import Http404
 from django.test import TestCase
 
 from apps.questions.models import Answer, Question
 from apps.subjects.models import Subject, Topic
-from exams.api.actions import ExamAPIAction
+from exams.api.actions import ExamAPIAction, UpstreamError
 from exams.models import Exam, ExamSubject
 
 
@@ -44,22 +45,22 @@ class ValidateExamSubjectTests(TestCase):
         assert subject == self.subject
 
     def test_raises_when_exam_not_found(self):
-        with self.assertRaises(Exam.DoesNotExist):
+        with self.assertRaises(Http404):
             ExamAPIAction.validate_exam_subject(99999, self.subject.pk)
 
     def test_raises_when_exam_inactive(self):
         self.exam.is_active = False
         self.exam.save()
-        with self.assertRaises(Exam.DoesNotExist):
+        with self.assertRaises(Http404):
             ExamAPIAction.validate_exam_subject(self.exam.pk, self.subject.pk)
 
     def test_raises_when_subject_not_found(self):
-        with self.assertRaises(Subject.DoesNotExist):
+        with self.assertRaises(Http404):
             ExamAPIAction.validate_exam_subject(self.exam.pk, 99999)
 
     def test_raises_when_subject_not_linked_to_exam(self):
         other_subject, _ = Subject.objects.get_or_create(name='Chemistry')
-        with self.assertRaises(ExamSubject.DoesNotExist):
+        with self.assertRaises(Http404):
             ExamAPIAction.validate_exam_subject(self.exam.pk, other_subject.pk)
 
 
@@ -187,12 +188,12 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
             'questions': [],
         }
 
-        with self.assertRaises(ValueError) as ctx:
+        with self.assertRaises(UpstreamError) as ctx:
             ExamAPIAction.get_daily_questions(
                 self.exam.pk, self.subject.pk
             )
 
-        assert 'Physics does not belong' in str(ctx.exception)
+        assert 'Physics does not belong' in str(ctx.exception.detail)
 
     @patch('exams.api.actions.GeminiClientInterface.generate')
     def test_raises_when_answer_count_not_4(self, mock_generate):
@@ -200,12 +201,12 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
         bad_response['questions'][0]['answers'] = bad_response['questions'][0]['answers'][:3]
         mock_generate.return_value = bad_response
 
-        with self.assertRaises(ValueError) as ctx:
+        with self.assertRaises(UpstreamError) as ctx:
             ExamAPIAction.get_daily_questions(
                 self.exam.pk, self.subject.pk, count=1
             )
 
-        assert '4 options' in str(ctx.exception)
+        assert '4 options' in str(ctx.exception.detail)
 
     @patch('exams.api.actions.GeminiClientInterface.generate')
     def test_raises_when_no_correct_answer(self, mock_generate):
@@ -214,12 +215,12 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
             a['is_correct'] = False
         mock_generate.return_value = bad_response
 
-        with self.assertRaises(ValueError) as ctx:
+        with self.assertRaises(UpstreamError) as ctx:
             ExamAPIAction.get_daily_questions(
                 self.exam.pk, self.subject.pk, count=1
             )
 
-        assert '1 correct answer' in str(ctx.exception)
+        assert '1 correct answer' in str(ctx.exception.detail)
 
     @patch('exams.api.actions.GeminiClientInterface.generate')
     def test_raises_when_multiple_correct_answers(self, mock_generate):
@@ -228,12 +229,12 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
             a['is_correct'] = True
         mock_generate.return_value = bad_response
 
-        with self.assertRaises(ValueError) as ctx:
+        with self.assertRaises(UpstreamError) as ctx:
             ExamAPIAction.get_daily_questions(
                 self.exam.pk, self.subject.pk, count=1
             )
 
-        assert '1 correct answer' in str(ctx.exception)
+        assert '1 correct answer' in str(ctx.exception.detail)
 
     @patch('exams.api.actions.GeminiClientInterface.generate')
     def test_does_not_persist_on_validation_failure(self, mock_generate):
@@ -242,7 +243,7 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
         mock_generate.return_value = bad_response
 
         initial_count = Question.objects.count()
-        with self.assertRaises(ValueError):
+        with self.assertRaises(UpstreamError):
             ExamAPIAction.get_daily_questions(
                 self.exam.pk, self.subject.pk, count=1
             )
