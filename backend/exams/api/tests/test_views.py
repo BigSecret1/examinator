@@ -4,8 +4,26 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from apps.questions.models import Question
 from apps.subjects.models import Subject
 from exams.models import Exam, ExamSubject
+
+
+def _make_mock_questions(n=10):
+    """Build a list of *n* well-formed question dicts for mocking Gemini."""
+    return [
+        {
+            'text': f'Question {i}?',
+            'explanation': f'Explanation for question {i}.',
+            'answers': [
+                {'text': f'Q{i} Option A', 'is_correct': True},
+                {'text': f'Q{i} Option B', 'is_correct': False},
+                {'text': f'Q{i} Option C', 'is_correct': False},
+                {'text': f'Q{i} Option D', 'is_correct': False},
+            ],
+        }
+        for i in range(1, n + 1)
+    ]
 
 
 class ExamListViewTests(APITestCase):
@@ -199,18 +217,7 @@ class ExamDailyQuestionsAPIViewSuccessTests(APITestCase):
     def test_returns_200_with_questions(self, mock_generate):
         mock_generate.return_value = {
             'status': 'success',
-            'questions': [
-                {
-                    'text': 'What is Newton\'s first law?',
-                    'explanation': 'An object at rest stays at rest.',
-                    'answers': [
-                        {'text': 'Inertia', 'is_correct': True},
-                        {'text': 'Gravity', 'is_correct': False},
-                        {'text': 'Friction', 'is_correct': False},
-                        {'text': 'Momentum', 'is_correct': False},
-                    ],
-                },
-            ],
+            'questions': _make_mock_questions(10),
         }
 
         response = self.client.get(
@@ -218,25 +225,13 @@ class ExamDailyQuestionsAPIViewSuccessTests(APITestCase):
         )
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
-        assert response.data[0]['text'] == 'What is Newton\'s first law?'
+        assert len(response.data) == 10
 
     @patch('exams.api.actions.GeminiClientInterface.generate')
     def test_passes_difficulty_to_action(self, mock_generate):
         mock_generate.return_value = {
             'status': 'success',
-            'questions': [
-                {
-                    'text': 'Hard question',
-                    'explanation': 'Explanation',
-                    'answers': [
-                        {'text': 'A', 'is_correct': True},
-                        {'text': 'B', 'is_correct': False},
-                        {'text': 'C', 'is_correct': False},
-                        {'text': 'D', 'is_correct': False},
-                    ],
-                },
-            ],
+            'questions': _make_mock_questions(10),
         }
 
         response = self.client.get(
@@ -252,17 +247,54 @@ class ExamDailyQuestionsAPIViewSuccessTests(APITestCase):
 class ExamDailyQuestionsAPIViewErrorTests(APITestCase):
     """Tests for error scenarios in daily-questions endpoint."""
 
-    def test_nonexistent_exam_raises_exception(self):
+    def test_nonexistent_exam_returns_404(self):
         url = reverse('exam-daily-questions', kwargs={'exam_id': 99999})
-        with self.assertRaises(Exam.DoesNotExist):
-            self.client.get(url, {'subject': 1})
+        response = self.client.get(url, {'subject': 1})
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_inactive_exam_raises_exception(self):
+    def test_inactive_exam_returns_404(self):
         subject, _ = Subject.objects.get_or_create(name='Physics')
         exam = Exam.objects.create(name='Inactive Exam', is_active=False)
         url = reverse('exam-daily-questions', kwargs={'exam_id': exam.pk})
-        with self.assertRaises(Exam.DoesNotExist):
-            self.client.get(url, {'subject': subject.pk})
+        response = self.client.get(url, {'subject': subject.pk})
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @patch('exams.api.actions.GeminiClientInterface.generate')
+    def test_insufficient_questions_returns_502(self, mock_generate):
+        """Gemini returning fewer than requested count must return 502."""
+        subject, _ = Subject.objects.get_or_create(name='Physics')
+        exam = Exam.objects.create(name='Count Check', is_active=True)
+        ExamSubject.objects.create(exam=exam, subject=subject)
+        url = reverse('exam-daily-questions', kwargs={'exam_id': exam.pk})
+
+        mock_generate.return_value = {
+            'status': 'success',
+            'questions': _make_mock_questions(7),  # 7 < default 10
+        }
+
+        response = self.client.get(url, {'subject': subject.pk})
+        assert response.status_code == status.HTTP_502_BAD_GATEWAY
+        assert 'detail' in response.data
+        assert '7' in str(response.data['detail'])
+        assert '10' in str(response.data['detail'])
+
+    @patch('exams.api.actions.GeminiClientInterface.generate')
+    def test_insufficient_questions_not_saved_to_db(self, mock_generate):
+        """No questions should be persisted when count is insufficient."""
+        subject, _ = Subject.objects.get_or_create(name='Physics')
+        exam = Exam.objects.create(name='No Persist', is_active=True)
+        ExamSubject.objects.create(exam=exam, subject=subject)
+        url = reverse('exam-daily-questions', kwargs={'exam_id': exam.pk})
+
+        before_count = Question.objects.count()
+
+        mock_generate.return_value = {
+            'status': 'success',
+            'questions': _make_mock_questions(5),  # 5 < default 10
+        }
+
+        self.client.get(url, {'subject': subject.pk})
+        assert Question.objects.count() == before_count
 
 
 class ExamSubjectsAPIViewTests(APITestCase):
@@ -318,16 +350,16 @@ class ExamSubjectsAPIViewTests(APITestCase):
         assert 'subtopics' not in item
         assert 'description' not in item
 
-    def test_nonexistent_exam_raises_exception(self):
+    def test_nonexistent_exam_returns_404(self):
         url = reverse('exam-subjects', kwargs={'exam_id': 99999})
-        with self.assertRaises(Exam.DoesNotExist):
-            self.client.get(url)
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_inactive_exam_raises_exception(self):
+    def test_inactive_exam_returns_404(self):
         self.exam.is_active = False
         self.exam.save()
-        with self.assertRaises(Exam.DoesNotExist):
-            self.client.get(self.url)
+        response = self.client.get(self.url)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_exam_with_no_subjects_returns_empty(self):
         empty_exam = Exam.objects.create(name='Empty Exam', is_active=True)
