@@ -27,6 +27,9 @@ export default function Home() {
             <h1 className="text-xl font-bold text-text-primary tracking-tight">
               Examinator
             </h1>
+            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-secondary/20 text-secondary border border-secondary/30">
+              Beta
+            </span>
           </div>
         </div>
       </header>
