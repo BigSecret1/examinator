@@ -3,7 +3,7 @@
 
 databases:
   - name: examinator-db
-    plan: free
+    plan: basic
     databaseName: examinator
     user: examinator
 
@@ -12,7 +12,7 @@ services:
   - type: web
     name: examinator-backend
     runtime: python
-    plan: free
+    plan: starter
     rootDir: backend
     buildCommand: ./build.sh
     startCommand: gunicorn examinator.wsgi:application --bind 0.0.0.0:$PORT --timeout 300
@@ -56,10 +56,10 @@ services:
   - type: cron
     name: examinator-question-gen
     runtime: python
-    plan: free
+    plan: starter
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    schedule: "0 5 * * *"   # every day at 05:00 UTC
+    schedule: "0 0 * * *"   # once daily at midnight (UTC)
     startCommand: python3 scripts/run_exam_question_generator.py
     envVars:
       - key: DJANGO_SETTINGS_MODULE
@@ -95,7 +95,7 @@ services:
   - type: web
     name: examinator-frontend
     runtime: node
-    plan: free
+    plan: starter
     rootDir: examinator-web
     buildCommand: npm install && npm run build
     startCommand: npm run start
