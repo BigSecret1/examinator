@@ -8,6 +8,10 @@ import json
 import os
 import sys
 
+# Ensure the backend root (parent of this script's directory) is on sys.path
+# so Django can locate the 'examinator' settings package.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'examinator.settings.production')
