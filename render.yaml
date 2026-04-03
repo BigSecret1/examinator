@@ -3,7 +3,7 @@
 
 databases:
   - name: examinator-db
-    plan: free
+    plan: basic
     databaseName: examinator
     user: examinator
 
@@ -12,7 +12,7 @@ services:
   - type: web
     name: examinator-backend
     runtime: python
-    plan: free
+    plan: starter
     rootDir: backend
     buildCommand: ./build.sh
     startCommand: gunicorn examinator.wsgi:application --bind 0.0.0.0:$PORT --timeout 300
@@ -52,11 +52,50 @@ services:
       - key: SECURE_SSL_REDIRECT
         value: "False"       # Render handles TLS termination
 
+  # ── Exam Question Generator Cron ────────────
+  - type: cron
+    name: examinator-question-gen
+    runtime: python
+    plan: starter
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    schedule: "0 0 * * *"   # once daily at midnight (UTC)
+    startCommand: python3 scripts/run_exam_question_generator.py
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: examinator.settings.production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: DB_NAME
+        fromDatabase:
+          name: examinator-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: examinator-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: examinator-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: examinator-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: examinator-db
+          property: port
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+
   # ── Next.js Frontend ────────────────────────
   - type: web
     name: examinator-frontend
     runtime: node
-    plan: free
+    plan: starter
     rootDir: examinator-web
     buildCommand: npm install && npm run build
     startCommand: npm run start
