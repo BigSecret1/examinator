@@ -8,8 +8,6 @@ from apps.subjects.models import SubTopic, Topic
 
 
 class Question(models.Model):
-    """A multiple-choice question linked to a topic."""
-
     DIFFICULTY_EASY = "easy"
     DIFFICULTY_MEDIUM = "medium"
     DIFFICULTY_HARD = "hard"
@@ -27,7 +25,9 @@ class Question(models.Model):
     text = models.TextField()
     explanation = models.TextField(blank=True, default='')
     difficulty = models.CharField(
-        max_length=10, choices=DIFFICULTY_CHOICES, default=DIFFICULTY_MEDIUM
+        max_length=10,
+        choices=DIFFICULTY_CHOICES,
+        default=DIFFICULTY_MEDIUM
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -40,9 +40,11 @@ class Question(models.Model):
 
 
 class Answer(models.Model):
-    """One of the possible answers for a question."""
-
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="answers")
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        related_name="answers"
+    )
     text = models.CharField(max_length=500)
     is_correct = models.BooleanField(default=False)
 
