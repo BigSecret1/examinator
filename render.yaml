@@ -3,7 +3,7 @@
 
 databases:
   - name: examinator-db
-    plan: basic
+    plan: Basic-256mb
     databaseName: examinator
     user: examinator
 
