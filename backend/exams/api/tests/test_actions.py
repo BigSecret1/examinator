@@ -1,8 +1,10 @@
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.core.cache import cache
 from django.http import Http404
 from django.test import TestCase
+from django.utils import timezone
 
 from apps.subjects.models import Subject
 from exams.api.actions import ExamAPIAction, UpstreamError
@@ -26,6 +28,25 @@ def _gemini_success_response():
             },
         ],
     }
+
+
+def _create_question_for_date(exam, subject, difficulty, target_date):
+    """Helper to create a question with a specific created_at date."""
+    q = ExamQuestion.objects.create(
+        exam=exam,
+        subject=subject,
+        text=f'Question for {target_date}',
+        difficulty=difficulty,
+    )
+    ExamQuestion.objects.filter(pk=q.pk).update(created_at=target_date)
+    q.refresh_from_db()
+    for j in range(4):
+        ExamQuestionAnswer.objects.create(
+            question=q,
+            text=f'Answer {j}',
+            is_correct=(j == 0),
+        )
+    return q
 
 
 class ValidateExamSubjectTests(TestCase):
@@ -63,6 +84,9 @@ class ValidateExamSubjectTests(TestCase):
             ExamAPIAction.validate_exam_subject(self.exam.pk, other_subject.pk)
 
 
+# ── get_daily_questions (read-only, serves yesterday's questions) ──
+
+
 class GetDailyQuestionsFromCacheTests(TestCase):
     """Tests for cache hit path."""
 
@@ -88,7 +112,7 @@ class GetDailyQuestionsFromCacheTests(TestCase):
 
 
 class GetDailyQuestionsFromDBTests(TestCase):
-    """Tests for DB hit path (questions already exist for today)."""
+    """Tests for DB hit path (questions generated yesterday)."""
 
     def setUp(self):
         self.subject, _ = Subject.objects.get_or_create(name='Physics')
@@ -98,20 +122,12 @@ class GetDailyQuestionsFromDBTests(TestCase):
     def tearDown(self):
         cache.clear()
 
-    def test_returns_from_db_when_enough_questions_exist(self):
+    def test_returns_from_db_when_yesterday_questions_exist(self):
+        yesterday = timezone.now() - timedelta(days=1)
         for i in range(10):
-            q = ExamQuestion.objects.create(
-                exam=self.exam,
-                subject=self.subject,
-                text=f'DB question {i}',
-                difficulty='medium',
+            _create_question_for_date(
+                self.exam, self.subject, 'medium', yesterday,
             )
-            for j in range(4):
-                ExamQuestionAnswer.objects.create(
-                    question=q,
-                    text=f'Answer {j}',
-                    is_correct=(j == 0),
-                )
 
         result = ExamAPIAction.get_daily_questions(
             self.exam.pk, self.subject.pk, difficulty='medium', count=10
@@ -120,13 +136,45 @@ class GetDailyQuestionsFromDBTests(TestCase):
         assert result['source'] == 'db'
         assert len(result['data']) == 10
 
+    def test_returns_empty_when_no_yesterday_questions(self):
+        result = ExamAPIAction.get_daily_questions(
+            self.exam.pk, self.subject.pk, difficulty='medium', count=10
+        )
 
-class GetDailyQuestionsFromGeminiTests(TestCase):
-    """Tests for Gemini generation path."""
+        assert result['source'] == 'db'
+        assert result['data'] == []
+
+    def test_ignores_today_questions(self):
+        """Questions created today should not be served to users."""
+        for i in range(10):
+            q = ExamQuestion.objects.create(
+                exam=self.exam,
+                subject=self.subject,
+                text=f'Today question {i}',
+                difficulty='medium',
+            )
+            for j in range(4):
+                ExamQuestionAnswer.objects.create(
+                    question=q, text=f'Answer {j}', is_correct=(j == 0),
+                )
+
+        result = ExamAPIAction.get_daily_questions(
+            self.exam.pk, self.subject.pk, difficulty='medium', count=10
+        )
+
+        assert result['source'] == 'db'
+        assert result['data'] == []
+
+
+# ── generate_daily_questions (cron-facing, calls Gemini) ──
+
+
+class GenerateDailyQuestionsTests(TestCase):
+    """Tests for ExamAPIAction.generate_daily_questions."""
 
     def setUp(self):
         self.subject, _ = Subject.objects.get_or_create(name='Physics')
-        self.exam = Exam.objects.create(name='JEE Gemini Test', is_active=True)
+        self.exam = Exam.objects.create(name='JEE Gen Test', is_active=True)
         ExamSubject.objects.create(exam=self.exam, subject=self.subject)
 
     def tearDown(self):
@@ -136,12 +184,12 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
     def test_generates_and_persists_questions(self, mock_generate):
         mock_generate.return_value = _gemini_success_response()
 
-        result = ExamAPIAction.get_daily_questions(
+        result = ExamAPIAction.generate_daily_questions(
             self.exam.pk, self.subject.pk, difficulty='medium', count=1
         )
 
-        assert result['source'] == 'generated'
-        assert len(result['data']) == 1
+        assert result['status'] == 'generated'
+        assert result['count'] == 1
         assert ExamQuestion.objects.count() >= 1
         assert ExamQuestionAnswer.objects.count() >= 4
 
@@ -149,7 +197,7 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
     def test_persisted_question_has_correct_fields(self, mock_generate):
         mock_generate.return_value = _gemini_success_response()
 
-        ExamAPIAction.get_daily_questions(
+        ExamAPIAction.generate_daily_questions(
             self.exam.pk, self.subject.pk, difficulty='hard', count=1
         )
 
@@ -161,20 +209,64 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
         assert q.answers.filter(is_correct=True).count() == 1
 
     @patch('exams.api.actions.GeminiClientInterface.generate')
-    def test_caches_generated_data(self, mock_generate):
+    def test_skips_when_already_generated(self, mock_generate):
         mock_generate.return_value = _gemini_success_response()
 
-        result1 = ExamAPIAction.get_daily_questions(
+        ExamAPIAction.generate_daily_questions(
             self.exam.pk, self.subject.pk, difficulty='medium', count=1
         )
-        assert result1['source'] == 'generated'
 
-        # Second call should hit cache
-        result2 = ExamAPIAction.get_daily_questions(
+        result = ExamAPIAction.generate_daily_questions(
             self.exam.pk, self.subject.pk, difficulty='medium', count=1
         )
-        assert result2['source'] == 'cache'
+
+        assert result['status'] == 'skipped'
+        assert result['reason'] == 'already_generated'
         mock_generate.assert_called_once()
+
+    @patch('exams.api.actions.GeminiClientInterface.generate')
+    def test_skips_when_lock_held(self, mock_generate):
+        """Concurrent call should be skipped if another generation is in progress."""
+        from django.utils import timezone
+        today = timezone.localdate()
+        lock_key = f"gen_lock:{self.exam.id}:{self.subject.id}:medium:{today}"
+        cache.add(lock_key, 'locked', timeout=300)
+
+        result = ExamAPIAction.generate_daily_questions(
+            self.exam.pk, self.subject.pk, difficulty='medium', count=1
+        )
+
+        assert result['status'] == 'skipped'
+        assert result['reason'] == 'generation_in_progress'
+        mock_generate.assert_not_called()
+
+    @patch('exams.api.actions.GeminiClientInterface.generate')
+    def test_lock_released_after_generation(self, mock_generate):
+        mock_generate.return_value = _gemini_success_response()
+
+        ExamAPIAction.generate_daily_questions(
+            self.exam.pk, self.subject.pk, difficulty='medium', count=1
+        )
+
+        from django.utils import timezone
+        today = timezone.localdate()
+        lock_key = f"gen_lock:{self.exam.id}:{self.subject.id}:medium:{today}"
+        assert cache.get(lock_key) is None
+
+    @patch('exams.api.actions.GeminiClientInterface.generate')
+    def test_lock_released_on_failure(self, mock_generate):
+        mock_generate.side_effect = RuntimeError('API down')
+
+        from django.utils import timezone
+        today = timezone.localdate()
+        lock_key = f"gen_lock:{self.exam.id}:{self.subject.id}:medium:{today}"
+
+        with self.assertRaises(RuntimeError):
+            ExamAPIAction.generate_daily_questions(
+                self.exam.pk, self.subject.pk, difficulty='medium', count=1
+            )
+
+        assert cache.get(lock_key) is None
 
     @patch('exams.api.actions.GeminiClientInterface.generate')
     def test_raises_on_invalid_topic_response(self, mock_generate):
@@ -185,7 +277,7 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
         }
 
         with self.assertRaises(UpstreamError) as ctx:
-            ExamAPIAction.get_daily_questions(
+            ExamAPIAction.generate_daily_questions(
                 self.exam.pk, self.subject.pk
             )
 
@@ -198,7 +290,7 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
         mock_generate.return_value = bad_response
 
         with self.assertRaises(UpstreamError) as ctx:
-            ExamAPIAction.get_daily_questions(
+            ExamAPIAction.generate_daily_questions(
                 self.exam.pk, self.subject.pk, count=1
             )
 
@@ -212,7 +304,7 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
         mock_generate.return_value = bad_response
 
         with self.assertRaises(UpstreamError) as ctx:
-            ExamAPIAction.get_daily_questions(
+            ExamAPIAction.generate_daily_questions(
                 self.exam.pk, self.subject.pk, count=1
             )
 
@@ -226,7 +318,7 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
         mock_generate.return_value = bad_response
 
         with self.assertRaises(UpstreamError) as ctx:
-            ExamAPIAction.get_daily_questions(
+            ExamAPIAction.generate_daily_questions(
                 self.exam.pk, self.subject.pk, count=1
             )
 
@@ -240,7 +332,7 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
 
         initial_count = ExamQuestion.objects.count()
         with self.assertRaises(UpstreamError):
-            ExamAPIAction.get_daily_questions(
+            ExamAPIAction.generate_daily_questions(
                 self.exam.pk, self.subject.pk, count=1
             )
 
