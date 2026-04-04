@@ -1,28 +1,37 @@
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.subjects.models import Subject
-from exams.models import Exam, ExamQuestion, ExamSubject
+from exams.models import Exam, ExamQuestion, ExamQuestionAnswer, ExamSubject
 
 
-def _make_mock_questions(n=10):
-    """Build a list of *n* well-formed question dicts for mocking Gemini."""
-    return [
-        {
-            'text': f'Question {i}?',
-            'explanation': f'Explanation for question {i}.',
-            'answers': [
-                {'text': f'Q{i} Option A', 'is_correct': True},
-                {'text': f'Q{i} Option B', 'is_correct': False},
-                {'text': f'Q{i} Option C', 'is_correct': False},
-                {'text': f'Q{i} Option D', 'is_correct': False},
-            ],
-        }
-        for i in range(1, n + 1)
-    ]
+def _seed_yesterday_questions(exam, subject, difficulty, count):
+    """Create questions dated yesterday for the given exam/subject."""
+    yesterday = timezone.now() - timedelta(days=1)
+    questions = []
+    for i in range(count):
+        q = ExamQuestion.objects.create(
+            exam=exam,
+            subject=subject,
+            text=f'Question {i}?',
+            explanation=f'Explanation {i}.',
+            difficulty=difficulty,
+        )
+        ExamQuestion.objects.filter(pk=q.pk).update(created_at=yesterday)
+        q.refresh_from_db()
+        for j in range(4):
+            ExamQuestionAnswer.objects.create(
+                question=q,
+                text=f'Q{i} Option {j}',
+                is_correct=(j == 0),
+            )
+        questions.append(q)
+    return questions
 
 
 class ExamListViewTests(APITestCase):
@@ -202,7 +211,7 @@ class ExamDailyQuestionsAPIViewParamTests(APITestCase):
 
 
 class ExamDailyQuestionsAPIViewSuccessTests(APITestCase):
-    """Tests for successful daily-questions generation."""
+    """Tests for successful daily-questions serving (read-only, yesterday's data)."""
 
     def setUp(self):
         self.subject, _ = Subject.objects.get_or_create(name='Physics')
@@ -212,12 +221,8 @@ class ExamDailyQuestionsAPIViewSuccessTests(APITestCase):
             'exam-daily-questions', kwargs={'exam_id': self.exam.pk}
         )
 
-    @patch('exams.api.actions.GeminiClientInterface.generate')
-    def test_returns_200_with_questions(self, mock_generate):
-        mock_generate.return_value = {
-            'status': 'success',
-            'questions': _make_mock_questions(10),
-        }
+    def test_returns_200_with_questions(self):
+        _seed_yesterday_questions(self.exam, self.subject, 'easy', 10)
 
         response = self.client.get(
             self.url, {'subject': self.subject.pk, 'difficulty': 'easy'}
@@ -226,21 +231,28 @@ class ExamDailyQuestionsAPIViewSuccessTests(APITestCase):
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 10
 
-    @patch('exams.api.actions.GeminiClientInterface.generate')
-    def test_passes_difficulty_to_action(self, mock_generate):
-        mock_generate.return_value = {
-            'status': 'success',
-            'questions': _make_mock_questions(10),
-        }
+    def test_returns_200_empty_when_no_questions(self):
+        response = self.client.get(
+            self.url, {'subject': self.subject.pk, 'difficulty': 'easy'}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == []
+
+    def test_filters_by_difficulty(self):
+        _seed_yesterday_questions(self.exam, self.subject, 'hard', 5)
+
+        response = self.client.get(
+            self.url, {'subject': self.subject.pk, 'difficulty': 'easy'}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == []
 
         response = self.client.get(
             self.url, {'subject': self.subject.pk, 'difficulty': 'hard'}
         )
-
         assert response.status_code == status.HTTP_200_OK
-        # Verify the prompt included 'hard'
-        call_args = mock_generate.call_args
-        assert 'hard' in call_args.kwargs['prompt']
+        assert len(response.data) == 5
 
 
 class ExamDailyQuestionsAPIViewErrorTests(APITestCase):
@@ -257,43 +269,6 @@ class ExamDailyQuestionsAPIViewErrorTests(APITestCase):
         url = reverse('exam-daily-questions', kwargs={'exam_id': exam.pk})
         response = self.client.get(url, {'subject': subject.pk})
         assert response.status_code == status.HTTP_404_NOT_FOUND
-
-    @patch('exams.api.actions.GeminiClientInterface.generate')
-    def test_insufficient_questions_returns_502(self, mock_generate):
-        """Gemini returning fewer than requested count must return 502."""
-        subject, _ = Subject.objects.get_or_create(name='Physics')
-        exam = Exam.objects.create(name='Count Check', is_active=True)
-        ExamSubject.objects.create(exam=exam, subject=subject)
-        url = reverse('exam-daily-questions', kwargs={'exam_id': exam.pk})
-
-        mock_generate.return_value = {
-            'status': 'success',
-            'questions': _make_mock_questions(7),  # 7 < default 10
-        }
-
-        response = self.client.get(url, {'subject': subject.pk})
-        assert response.status_code == status.HTTP_502_BAD_GATEWAY
-        assert 'detail' in response.data
-        assert '7' in str(response.data['detail'])
-        assert '10' in str(response.data['detail'])
-
-    @patch('exams.api.actions.GeminiClientInterface.generate')
-    def test_insufficient_questions_not_saved_to_db(self, mock_generate):
-        """No questions should be persisted when count is insufficient."""
-        subject, _ = Subject.objects.get_or_create(name='Physics')
-        exam = Exam.objects.create(name='No Persist', is_active=True)
-        ExamSubject.objects.create(exam=exam, subject=subject)
-        url = reverse('exam-daily-questions', kwargs={'exam_id': exam.pk})
-
-        before_count = ExamQuestion.objects.count()
-
-        mock_generate.return_value = {
-            'status': 'success',
-            'questions': _make_mock_questions(5),  # 5 < default 10
-        }
-
-        self.client.get(url, {'subject': subject.pk})
-        assert ExamQuestion.objects.count() == before_count
 
 
 class ExamSubjectsAPIViewTests(APITestCase):

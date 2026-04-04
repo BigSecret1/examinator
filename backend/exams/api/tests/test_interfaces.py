@@ -14,19 +14,19 @@ class ExamInterfaceTests(TestCase):
         self.exam = Exam.objects.create(name='JEE Main', is_active=True)
         ExamSubject.objects.create(exam=self.exam, subject=self.subject)
 
-    @patch('exams.api.interfaces.ExamAPIAction.get_daily_questions')
+    @patch('exams.api.interfaces.ExamAPIAction.generate_daily_questions')
     def test_returns_action_result_on_success(self, mock_action):
-        mock_action.return_value = {'source': 'generated', 'data': [{'id': 1}]}
+        mock_action.return_value = {'status': 'generated', 'count': 10}
         result = ExamInterface.generate_daily_questions(
             self.exam.pk, self.subject.pk, difficulty='easy',
         )
-        self.assertEqual(result['source'], 'generated')
-        self.assertEqual(len(result['data']), 1)
+        self.assertEqual(result['status'], 'generated')
+        self.assertEqual(result['count'], 10)
         mock_action.assert_called_once_with(
             self.exam.pk, self.subject.pk, difficulty='easy', count=10,
         )
 
-    @patch('exams.api.interfaces.ExamAPIAction.get_daily_questions')
+    @patch('exams.api.interfaces.ExamAPIAction.generate_daily_questions')
     def test_returns_error_dict_on_exception(self, mock_action):
         mock_action.side_effect = RuntimeError('upstream down')
         result = ExamInterface.generate_daily_questions(

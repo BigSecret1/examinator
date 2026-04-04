@@ -1,6 +1,6 @@
 import hashlib
 import logging
-from datetime import date
+from datetime import date, timedelta
 
 from django.core.cache import cache
 from django.db import transaction
@@ -47,28 +47,44 @@ class ExamAPIAction:
     def get_daily_questions(exam_id, subject_id, difficulty='medium', count=10):
         exam, subject = ExamAPIAction.validate_exam_subject(exam_id, subject_id)
 
-        today = date.today().isoformat()
-        key_raw = f"exam_daily:{exam.id}:{subject.id}:{difficulty}:{today}"
+        yesterday = (date.today() - timedelta(days=1)).isoformat()
+        key_raw = f"exam_daily:{exam.id}:{subject.id}:{difficulty}:{yesterday}"
         cache_key = "edq_" + hashlib.md5(key_raw.encode()).hexdigest()
 
         cached = cache.get(cache_key)
         if cached is not None:
             return {'source': 'cache', 'data': cached}
 
+        print("yesterday", yesterday)
         qs = ExamQuestion.objects.filter(
             exam=exam,
             subject=subject,
             difficulty=difficulty,
-            created_at__date=today,
+            created_at__date=yesterday,
         ).select_related(
             'exam', 'subject',
         ).prefetch_related('answers')
 
-        if qs.count() >= count:
-            from .serializers import ExamQuestionSerializer
-            data = ExamQuestionSerializer(qs[:count], many=True).data
-            cache.set(cache_key, data, timeout=3600)
-            return {'source': 'db', 'data': data}
+        if not qs.exists():
+            return {'source': 'db', 'data': []}
+
+        from .serializers import ExamQuestionSerializer
+        data = ExamQuestionSerializer(qs[:count], many=True).data
+        cache.set(cache_key, data, timeout=86400)
+        return {'source': 'db', 'data': data}
+
+    @staticmethod
+    def generate_daily_questions(exam_id, subject_id, difficulty='medium', count=10):
+        exam, subject = ExamAPIAction.validate_exam_subject(exam_id, subject_id)
+
+        today = date.today().isoformat()
+
+        existing = ExamQuestion.objects.filter(
+            exam=exam, subject=subject,
+            difficulty=difficulty, created_at__date=today,
+        ).count()
+        if existing >= count:
+            return {'status': 'skipped', 'reason': 'already_generated'}
 
         prompt = USER_PROMPT_TEMPLATE.format(
             count=count,
@@ -122,7 +138,4 @@ class ExamAPIAction:
                     )
                 created_questions.append(q_obj)
 
-        from .serializers import ExamQuestionSerializer
-        data = ExamQuestionSerializer(created_questions, many=True).data
-        cache.set(cache_key, data, timeout=3600)
-        return {'source': 'generated', 'data': data}
+        return {'status': 'generated', 'count': len(created_questions)}
