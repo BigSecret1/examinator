@@ -16,6 +16,11 @@ Thumbs.db
 !.env.example
 
 # ──────────────────────────────────────────────
+# Stale frontend directory (replaced by examinator-web/)
+# ──────────────────────────────────────────────
+frontend/
+
+# ──────────────────────────────────────────────
 # Next.js (examinator-web/)
 # ──────────────────────────────────────────────
 examinator-web/.next/
