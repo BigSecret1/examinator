@@ -83,6 +83,11 @@ class ExamAPIAction:
             prompt=prompt,
         )
 
+        if result.get('status') == 'invalid_topic':
+            raise UpstreamError(
+                result.get('message') or 'Gemini rejected the requested topic.'
+            )
+
         raw_questions = result.get('questions', [])
         if len(raw_questions) < count:
             raise UpstreamError(

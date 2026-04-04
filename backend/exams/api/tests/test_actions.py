@@ -177,6 +177,21 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
         mock_generate.assert_called_once()
 
     @patch('exams.api.actions.GeminiClientInterface.generate')
+    def test_raises_on_invalid_topic_response(self, mock_generate):
+        mock_generate.return_value = {
+            'status': 'invalid_topic',
+            'message': 'Physics does not belong to this exam.',
+            'questions': [],
+        }
+
+        with self.assertRaises(UpstreamError) as ctx:
+            ExamAPIAction.get_daily_questions(
+                self.exam.pk, self.subject.pk
+            )
+
+        assert 'Physics does not belong' in str(ctx.exception.detail)
+
+    @patch('exams.api.actions.GeminiClientInterface.generate')
     def test_raises_when_answer_count_not_4(self, mock_generate):
         bad_response = _gemini_success_response()
         bad_response['questions'][0]['answers'] = bad_response['questions'][0]['answers'][:3]

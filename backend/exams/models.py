@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -85,6 +86,15 @@ class ExamQuestion(models.Model):
 
     def __str__(self):
         return self.text[:80]
+
+    def clean(self):
+        if self.exam_id and self.subject_id:
+            if not ExamSubject.objects.filter(
+                exam_id=self.exam_id, subject_id=self.subject_id,
+            ).exists():
+                raise ValidationError(
+                    {'subject': 'This subject is not linked to the selected exam.'}
+                )
 
     class Meta:
         db_table = 'examinator_exam_question'
