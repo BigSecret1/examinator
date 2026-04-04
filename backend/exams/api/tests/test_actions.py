@@ -225,6 +225,50 @@ class GenerateDailyQuestionsTests(TestCase):
         mock_generate.assert_called_once()
 
     @patch('exams.api.actions.GeminiClientInterface.generate')
+    def test_skips_when_lock_held(self, mock_generate):
+        """Concurrent call should be skipped if another generation is in progress."""
+        from django.utils import timezone
+        today = timezone.localdate()
+        lock_key = f"gen_lock:{self.exam.id}:{self.subject.id}:medium:{today}"
+        cache.add(lock_key, 'locked', timeout=300)
+
+        result = ExamAPIAction.generate_daily_questions(
+            self.exam.pk, self.subject.pk, difficulty='medium', count=1
+        )
+
+        assert result['status'] == 'skipped'
+        assert result['reason'] == 'generation_in_progress'
+        mock_generate.assert_not_called()
+
+    @patch('exams.api.actions.GeminiClientInterface.generate')
+    def test_lock_released_after_generation(self, mock_generate):
+        mock_generate.return_value = _gemini_success_response()
+
+        ExamAPIAction.generate_daily_questions(
+            self.exam.pk, self.subject.pk, difficulty='medium', count=1
+        )
+
+        from django.utils import timezone
+        today = timezone.localdate()
+        lock_key = f"gen_lock:{self.exam.id}:{self.subject.id}:medium:{today}"
+        assert cache.get(lock_key) is None
+
+    @patch('exams.api.actions.GeminiClientInterface.generate')
+    def test_lock_released_on_failure(self, mock_generate):
+        mock_generate.side_effect = RuntimeError('API down')
+
+        from django.utils import timezone
+        today = timezone.localdate()
+        lock_key = f"gen_lock:{self.exam.id}:{self.subject.id}:medium:{today}"
+
+        with self.assertRaises(RuntimeError):
+            ExamAPIAction.generate_daily_questions(
+                self.exam.pk, self.subject.pk, difficulty='medium', count=1
+            )
+
+        assert cache.get(lock_key) is None
+
+    @patch('exams.api.actions.GeminiClientInterface.generate')
     def test_raises_on_invalid_topic_response(self, mock_generate):
         mock_generate.return_value = {
             'status': 'invalid_topic',

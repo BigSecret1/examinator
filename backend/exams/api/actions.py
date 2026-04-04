@@ -1,10 +1,11 @@
 import hashlib
 import logging
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.core.cache import cache
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status as http_status
 from rest_framework.exceptions import APIException
 
@@ -47,15 +48,14 @@ class ExamAPIAction:
     def get_daily_questions(exam_id, subject_id, difficulty='medium', count=10):
         exam, subject = ExamAPIAction.validate_exam_subject(exam_id, subject_id)
 
-        yesterday = (date.today() - timedelta(days=1)).isoformat()
-        key_raw = f"exam_daily:{exam.id}:{subject.id}:{difficulty}:{yesterday}"
+        yesterday = timezone.localdate() - timedelta(days=1)
+        key_raw = f"exam_daily:{exam.id}:{subject.id}:{difficulty}:{yesterday.isoformat()}"
         cache_key = "edq_" + hashlib.md5(key_raw.encode()).hexdigest()
 
         cached = cache.get(cache_key)
         if cached is not None:
             return {'source': 'cache', 'data': cached}
 
-        print("yesterday", yesterday)
         qs = ExamQuestion.objects.filter(
             exam=exam,
             subject=subject,
@@ -77,7 +77,7 @@ class ExamAPIAction:
     def generate_daily_questions(exam_id, subject_id, difficulty='medium', count=10):
         exam, subject = ExamAPIAction.validate_exam_subject(exam_id, subject_id)
 
-        today = date.today().isoformat()
+        today = timezone.localdate()
 
         existing = ExamQuestion.objects.filter(
             exam=exam, subject=subject,
@@ -86,56 +86,63 @@ class ExamAPIAction:
         if existing >= count:
             return {'status': 'skipped', 'reason': 'already_generated'}
 
-        prompt = USER_PROMPT_TEMPLATE.format(
-            count=count,
-            exam=exam.name,
-            subject=subject.name,
-            difficulty=difficulty,
-        )
+        lock_key = f"gen_lock:{exam.id}:{subject.id}:{difficulty}:{today}"
+        if not cache.add(lock_key, 'locked', timeout=300):
+            return {'status': 'skipped', 'reason': 'generation_in_progress'}
 
-        result = GeminiClientInterface.generate(
-            system_instruction=SYSTEM_INSTRUCTION,
-            response_schema=MCQ_SCHEMA,
-            prompt=prompt,
-        )
-
-        if result.get('status') == 'invalid_topic':
-            raise UpstreamError(
-                result.get('message') or 'Gemini rejected the requested topic.'
+        try:
+            prompt = USER_PROMPT_TEMPLATE.format(
+                count=count,
+                exam=exam.name,
+                subject=subject.name,
+                difficulty=difficulty,
             )
 
-        raw_questions = result.get('questions', [])
-        if len(raw_questions) < count:
-            raise UpstreamError(
-                f'Gemini returned {len(raw_questions)} questions but '
-                f'{count} were requested. Aborting to avoid partial data.'
+            result = GeminiClientInterface.generate(
+                system_instruction=SYSTEM_INSTRUCTION,
+                response_schema=MCQ_SCHEMA,
+                prompt=prompt,
             )
 
-        created_questions = []
-
-        with transaction.atomic():
-            for q_data in raw_questions:
-                answers = q_data.get('answers', [])
-                if len(answers) != 4:
-                    raise UpstreamError('Each question must have exactly 4 options.')
-                if sum(1 for a in answers if a.get('is_correct')) != 1:
-                    raise UpstreamError(
-                        'Each question must have exactly 1 correct answer.'
-                    )
-
-                q_obj = ExamQuestion.objects.create(
-                    exam=exam,
-                    subject=subject,
-                    text=q_data['text'],
-                    explanation=q_data.get('explanation', ''),
-                    difficulty=difficulty,
+            if result.get('status') == 'invalid_topic':
+                raise UpstreamError(
+                    result.get('message') or 'Gemini rejected the requested topic.'
                 )
-                for a_data in answers:
-                    ExamQuestionAnswer.objects.create(
-                        question=q_obj,
-                        text=a_data['text'],
-                        is_correct=a_data['is_correct'],
-                    )
-                created_questions.append(q_obj)
 
-        return {'status': 'generated', 'count': len(created_questions)}
+            raw_questions = result.get('questions', [])
+            if len(raw_questions) < count:
+                raise UpstreamError(
+                    f'Gemini returned {len(raw_questions)} questions but '
+                    f'{count} were requested. Aborting to avoid partial data.'
+                )
+
+            created_questions = []
+
+            with transaction.atomic():
+                for q_data in raw_questions:
+                    answers = q_data.get('answers', [])
+                    if len(answers) != 4:
+                        raise UpstreamError('Each question must have exactly 4 options.')
+                    if sum(1 for a in answers if a.get('is_correct')) != 1:
+                        raise UpstreamError(
+                            'Each question must have exactly 1 correct answer.'
+                        )
+
+                    q_obj = ExamQuestion.objects.create(
+                        exam=exam,
+                        subject=subject,
+                        text=q_data['text'],
+                        explanation=q_data.get('explanation', ''),
+                        difficulty=difficulty,
+                    )
+                    for a_data in answers:
+                        ExamQuestionAnswer.objects.create(
+                            question=q_obj,
+                            text=a_data['text'],
+                            is_correct=a_data['is_correct'],
+                        )
+                    created_questions.append(q_obj)
+
+            return {'status': 'generated', 'count': len(created_questions)}
+        finally:
+            cache.delete(lock_key)
