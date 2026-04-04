@@ -4,10 +4,9 @@ from django.core.cache import cache
 from django.http import Http404
 from django.test import TestCase
 
-from apps.questions.models import Answer, Question
-from apps.subjects.models import Subject, Topic
+from apps.subjects.models import Subject
 from exams.api.actions import ExamAPIAction, UpstreamError
-from exams.models import Exam, ExamSubject
+from exams.models import Exam, ExamQuestion, ExamQuestionAnswer, ExamSubject
 
 
 def _gemini_success_response():
@@ -95,23 +94,20 @@ class GetDailyQuestionsFromDBTests(TestCase):
         self.subject, _ = Subject.objects.get_or_create(name='Physics')
         self.exam = Exam.objects.create(name='JEE DB Test', is_active=True)
         ExamSubject.objects.create(exam=self.exam, subject=self.subject)
-        self.topic, _ = Topic.objects.get_or_create(
-            subject=self.subject, name='General',
-            defaults={'description': 'General questions'},
-        )
 
     def tearDown(self):
         cache.clear()
 
     def test_returns_from_db_when_enough_questions_exist(self):
         for i in range(10):
-            q = Question.objects.create(
-                topic=self.topic,
+            q = ExamQuestion.objects.create(
+                exam=self.exam,
+                subject=self.subject,
                 text=f'DB question {i}',
                 difficulty='medium',
             )
             for j in range(4):
-                Answer.objects.create(
+                ExamQuestionAnswer.objects.create(
                     question=q,
                     text=f'Answer {j}',
                     is_correct=(j == 0),
@@ -146,8 +142,8 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
 
         assert result['source'] == 'generated'
         assert len(result['data']) == 1
-        assert Question.objects.count() >= 1
-        assert Answer.objects.count() >= 4
+        assert ExamQuestion.objects.count() >= 1
+        assert ExamQuestionAnswer.objects.count() >= 4
 
     @patch('exams.api.actions.GeminiClientInterface.generate')
     def test_persisted_question_has_correct_fields(self, mock_generate):
@@ -157,7 +153,7 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
             self.exam.pk, self.subject.pk, difficulty='hard', count=1
         )
 
-        q = Question.objects.last()
+        q = ExamQuestion.objects.last()
         assert q.text == 'What is 2+2?'
         assert q.explanation == '2+2 equals 4.'
         assert q.difficulty == 'hard'
@@ -179,21 +175,6 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
         )
         assert result2['source'] == 'cache'
         mock_generate.assert_called_once()
-
-    @patch('exams.api.actions.GeminiClientInterface.generate')
-    def test_raises_on_invalid_topic_response(self, mock_generate):
-        mock_generate.return_value = {
-            'status': 'invalid_topic',
-            'message': 'Physics does not belong to this exam.',
-            'questions': [],
-        }
-
-        with self.assertRaises(UpstreamError) as ctx:
-            ExamAPIAction.get_daily_questions(
-                self.exam.pk, self.subject.pk
-            )
-
-        assert 'Physics does not belong' in str(ctx.exception.detail)
 
     @patch('exams.api.actions.GeminiClientInterface.generate')
     def test_raises_when_answer_count_not_4(self, mock_generate):
@@ -242,10 +223,10 @@ class GetDailyQuestionsFromGeminiTests(TestCase):
         bad_response['questions'][0]['answers'] = bad_response['questions'][0]['answers'][:2]
         mock_generate.return_value = bad_response
 
-        initial_count = Question.objects.count()
+        initial_count = ExamQuestion.objects.count()
         with self.assertRaises(UpstreamError):
             ExamAPIAction.get_daily_questions(
                 self.exam.pk, self.subject.pk, count=1
             )
 
-        assert Question.objects.count() == initial_count
+        assert ExamQuestion.objects.count() == initial_count

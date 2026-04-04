@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from apps.subjects.api.serializers import SubjectSerializer
-from ..models import Exam, ExamSubject
+from ..models import Exam, ExamQuestion, ExamQuestionAnswer, ExamSubject
 
 
 class ExamSubjectSerializer(serializers.ModelSerializer):
@@ -61,6 +61,33 @@ class ExamSubjectListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExamSubject
         fields = ['id', 'subject_id', 'subject_name', 'is_optional']
+
+
+class ExamQuestionAnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExamQuestionAnswer
+        fields = ['id', 'text', 'is_correct']
+
+
+class ExamQuestionSerializer(serializers.ModelSerializer):
+    answers = ExamQuestionAnswerSerializer(many=True, read_only=True)
+    subject_name = serializers.CharField(source='subject.name', read_only=True)
+
+    class Meta:
+        model = ExamQuestion
+        fields = [
+            'id',
+            'exam',
+            'subject',
+            'subject_name',
+            'text',
+            'explanation',
+            'difficulty',
+            'answers',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 
 class ExamDailyQuestionsParamsSerializer(serializers.Serializer):
