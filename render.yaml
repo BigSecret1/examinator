@@ -59,7 +59,7 @@ services:
     plan: starter
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    schedule: "0 0 * * *"   # once daily at midnight (UTC)
+    schedule: "0 * * * *"   # every hour (UTC)
     startCommand: python3 scripts/run_exam_question_generator.py
     envVars:
       - key: DJANGO_SETTINGS_MODULE
