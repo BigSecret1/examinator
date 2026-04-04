@@ -4,9 +4,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.questions.models import Question
 from apps.subjects.models import Subject
-from exams.models import Exam, ExamSubject
+from exams.models import Exam, ExamQuestion, ExamSubject
 
 
 def _make_mock_questions(n=10):
@@ -286,7 +285,7 @@ class ExamDailyQuestionsAPIViewErrorTests(APITestCase):
         ExamSubject.objects.create(exam=exam, subject=subject)
         url = reverse('exam-daily-questions', kwargs={'exam_id': exam.pk})
 
-        before_count = Question.objects.count()
+        before_count = ExamQuestion.objects.count()
 
         mock_generate.return_value = {
             'status': 'success',
@@ -294,7 +293,7 @@ class ExamDailyQuestionsAPIViewErrorTests(APITestCase):
         }
 
         self.client.get(url, {'subject': subject.pk})
-        assert Question.objects.count() == before_count
+        assert ExamQuestion.objects.count() == before_count
 
 
 class ExamSubjectsAPIViewTests(APITestCase):

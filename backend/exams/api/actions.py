@@ -8,10 +8,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status as http_status
 from rest_framework.exceptions import APIException
 
-from apps.questions.api.serializers import QuestionSerializer
-from apps.questions.models import Answer, Question
-from apps.subjects.models import Subject, Topic
-from exams.models import Exam, ExamSubject
+from apps.subjects.models import Subject
+from exams.models import Exam, ExamQuestion, ExamQuestionAnswer, ExamSubject
 from geminiclient.api.interfaces import GeminiClientInterface
 
 from .utils import MCQ_SCHEMA, SYSTEM_INSTRUCTION, USER_PROMPT_TEMPLATE
@@ -57,22 +55,18 @@ class ExamAPIAction:
         if cached is not None:
             return {'source': 'cache', 'data': cached}
 
-        storage_topic, _ = Topic.objects.get_or_create(
+        qs = ExamQuestion.objects.filter(
+            exam=exam,
             subject=subject,
-            name='General',
-            defaults={'description': 'General questions'},
-        )
-
-        qs = Question.objects.filter(
-            topic=storage_topic,
             difficulty=difficulty,
             created_at__date=today,
         ).select_related(
-            'topic__subject', 'subtopic',
+            'exam', 'subject',
         ).prefetch_related('answers')
 
         if qs.count() >= count:
-            data = QuestionSerializer(qs[:count], many=True).data
+            from .serializers import ExamQuestionSerializer
+            data = ExamQuestionSerializer(qs[:count], many=True).data
             cache.set(cache_key, data, timeout=3600)
             return {'source': 'db', 'data': data}
 
@@ -91,7 +85,7 @@ class ExamAPIAction:
 
         if result.get('status') == 'invalid_topic':
             raise UpstreamError(
-                result.get('message', 'The subject does not match the exam.')
+                result.get('message') or 'Gemini rejected the requested topic.'
             )
 
         raw_questions = result.get('questions', [])
@@ -113,20 +107,22 @@ class ExamAPIAction:
                         'Each question must have exactly 1 correct answer.'
                     )
 
-                q_obj = Question.objects.create(
-                    topic=storage_topic,
+                q_obj = ExamQuestion.objects.create(
+                    exam=exam,
+                    subject=subject,
                     text=q_data['text'],
                     explanation=q_data.get('explanation', ''),
                     difficulty=difficulty,
                 )
                 for a_data in answers:
-                    Answer.objects.create(
+                    ExamQuestionAnswer.objects.create(
                         question=q_obj,
                         text=a_data['text'],
                         is_correct=a_data['is_correct'],
                     )
                 created_questions.append(q_obj)
 
-        data = QuestionSerializer(created_questions, many=True).data
+        from .serializers import ExamQuestionSerializer
+        data = ExamQuestionSerializer(created_questions, many=True).data
         cache.set(cache_key, data, timeout=3600)
         return {'source': 'generated', 'data': data}
