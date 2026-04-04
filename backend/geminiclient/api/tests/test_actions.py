@@ -94,7 +94,7 @@ class GeminiClientActionGenerateTests(TestCase):
         assert result == expected
         mock_model_cls.return_value.generate_content.assert_called_once_with(
             'test prompt',
-            request_options={'timeout': 60},
+            request_options={'timeout': 300},
         )
 
     @patch('geminiclient.api.actions.time.sleep')
