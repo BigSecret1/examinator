@@ -189,7 +189,7 @@ class QuestionAPIAction:
                     defaults={'description': 'General questions'},
                 )
             else:
-                storage_topic = Topic.objects.get(pk=topic_id)
+                storage_topic = topic_obj
 
             with transaction.atomic():
                 for q_data in raw_questions:
