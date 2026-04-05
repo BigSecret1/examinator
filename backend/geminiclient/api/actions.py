@@ -20,7 +20,7 @@ class GeminiClientAction:
             self,
             system_instruction,
             response_schema,
-            temperature=0.7,
+            temperature=0.5,
             models=None,
             max_retries=None,
     ):

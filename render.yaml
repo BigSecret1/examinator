@@ -11,6 +11,7 @@ services:
   # ── Django API ──────────────────────────────
   - type: web
     name: examinator-backend
+    autoDeploy: false
     runtime: python
     plan: starter
     rootDir: backend
@@ -55,6 +56,7 @@ services:
   # ── Exam Question Generator Cron ────────────
   - type: cron
     name: examinator-question-gen
+    autoDeploy: false
     runtime: python
     plan: starter
     rootDir: backend
@@ -94,6 +96,7 @@ services:
   # ── Next.js Frontend ────────────────────────
   - type: web
     name: examinator-frontend
+    autoDeploy: false
     runtime: node
     plan: starter
     rootDir: examinator-web
