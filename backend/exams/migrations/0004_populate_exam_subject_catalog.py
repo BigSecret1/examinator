@@ -50,4 +50,16 @@ class Migration(migrations.Migration):
             copy_subjects_forward,
             copy_subjects_reverse,
         ),
+        # Reset the PK sequence so the next auto-generated id starts after
+        # the highest explicitly-inserted id.  Without this, PostgreSQL's
+        # sequence is still at 1 and the next INSERT will collide.
+        migrations.RunSQL(
+            sql="""
+                SELECT setval(
+                    pg_get_serial_sequence('examinator_exam_subject_catalog', 'id'),
+                    COALESCE((SELECT MAX(id) FROM examinator_exam_subject_catalog), 1)
+                );
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
     ]
