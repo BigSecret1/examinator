@@ -2,148 +2,132 @@
 #
 # Licensed under the Apache License, Version 2.0
 
-import json
+import hashlib
 import logging
-import time
+from datetime import date
 
-import google.generativeai as genai
-from django.conf import settings
+from django.core.cache import cache
+from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import ValidationError
+
+from apps.subjects.models import Subject, SubTopic, Topic
+from geminiclient.api.interfaces import GeminiClientInterface
+
+from ..models import Answer, Question
+from .utils import MCQ_SCHEMA, SYSTEM_INSTRUCTION, USER_PROMPT_TEMPLATE
 
 logger = logging.getLogger(__name__)
 
-GEMINI_MODELS = [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash',
-]
 
-SYSTEM_INSTRUCTION = '''\
-You are an expert assessment item writer.
-Validation Rule: If the requested Topic does not logically belong to the Subject,
-set status to 'invalid_topic' and return an empty questions array.
-Rules: 4 options per question, exactly 1 correct, random correct answer placement,
-no 'All of the above', distinct and plausible distractors. Include detailed explanations.
-'''
+class QuestionAPIAction:
+    """Business logic layer for subject-based question operations."""
 
-USER_PROMPT_TEMPLATE = '''\
-Generate exactly {count} unique multiple-choice questions:
-- Subject: {subject}
-- Topic: {topic}
-- Subtopic: {subtopic}
-- Difficulty: {difficulty}
+    @staticmethod
+    def get_daily_questions(
+            subject_id,
+            topic_id=None,
+            subtopic_id=None,
+            difficulty='medium',
+            count=10
+    ):
+        subject = get_object_or_404(Subject, pk=subject_id)
 
-Difficulty Policy:
-- easy: recall/basic concepts
-- medium: applied understanding
-- hard: analysis, synthesis, multi-step reasoning
-'''
+        # Resolve topic
+        topic_name = 'All Topics'
+        if topic_id is not None:
+            topic_obj = get_object_or_404(Topic, pk=topic_id, subject=subject)
+            topic_name = topic_obj.name
 
-MCQ_SCHEMA = {
-    'type': 'OBJECT',
-    'properties': {
-        'status': {
-            'type': 'STRING',
-            'enum': ['success', 'invalid_topic'],
-            'description': "Returns 'success' if the topic matches the subject, 'invalid_topic' if the input is nonsensical.",
-        },
-        'message': {
-            'type': 'STRING',
-            'description': 'Optional message explaining why a topic was invalid.',
-        },
-        'questions': {
-            'type': 'ARRAY',
-            'description': 'Array of multiple choice questions.',
-            'items': {
-                'type': 'OBJECT',
-                'properties': {
-                    'text': {
-                        'type': 'STRING',
-                        'description': 'The actual question text ending with a question mark.',
-                    },
-                    'answers': {
-                        'type': 'ARRAY',
-                        'items': {
-                            'type': 'OBJECT',
-                            'properties': {
-                                'text': {'type': 'STRING'},
-                                'is_correct': {'type': 'BOOLEAN'},
-                            },
-                            'required': ['text', 'is_correct'],
-                        },
-                    },
-                    'explanation': {
-                        'type': 'STRING',
-                        'description': 'Explanation of the correct answer.',
-                    },
-                },
-                'required': ['text', 'answers', 'explanation'],
-            },
-        },
-    },
-    'required': ['status', 'questions'],
-}
+        # Resolve subtopic
+        resolved_subtopic = None
+        subtopic_name = 'None'
+        if subtopic_id is not None:
+            resolved_subtopic = get_object_or_404(
+                SubTopic, pk=subtopic_id, topic_id=topic_id,
+            )
+            subtopic_name = resolved_subtopic.name
 
+        # Cache
+        today = date.today().isoformat()
+        subtopic_token = str(resolved_subtopic.pk) if resolved_subtopic else 'all'
+        topic_token = str(topic_id) if topic_id else 'all'
+        key_raw = (
+            f"daily:{subject.id}:{topic_token}:{subtopic_token}"
+            f":{difficulty}:{today}"
+        )
+        cache_key = 'dq_' + hashlib.md5(key_raw.encode()).hexdigest()
 
-def generate_questions(
-        subject_name: str,
-        topic_name: str,
-        difficulty: str,
-        subtopic_name: str,
-        count: int = 10,
-) -> dict:
-    api_key = settings.GEMINI_API_KEY
-    if not api_key:
-        raise ValueError('GEMINI_API_KEY is not configured in settings.')
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return {'source': 'cache', 'data': cached}
 
-    genai.configure(api_key=api_key)
+        # DB lookup
+        qs = Question.objects.filter(
+            topic__subject=subject,
+            difficulty=difficulty,
+            created_at__date=today,
+        ).select_related('topic__subject', 'subtopic').prefetch_related('answers')
 
-    user_prompt = USER_PROMPT_TEMPLATE.format(
-        count=count,
-        subject=subject_name,
-        topic=topic_name,
-        subtopic=subtopic_name,
-        difficulty=difficulty,
-    )
+        if topic_id is not None:
+            qs = qs.filter(topic_id=topic_id)
+        if resolved_subtopic:
+            qs = qs.filter(subtopic=resolved_subtopic)
 
-    max_retries = 5
-    delays = [1, 2, 4, 8, 16]
-    last_error = None
+        if qs.count() >= count:
+            from .serializers import QuestionSerializer
+            data = QuestionSerializer(qs[:count], many=True).data
+            cache.set(cache_key, data, timeout=3600)
+            return {'source': 'db', 'data': data}
 
-    for model_name in GEMINI_MODELS:
-        model = genai.GenerativeModel(
-            model_name=model_name,
+        # Generate via Gemini
+        prompt = USER_PROMPT_TEMPLATE.format(
+            count=count,
+            subject=subject.name,
+            topic=topic_name,
+            subtopic=subtopic_name,
+            difficulty=difficulty,
+        )
+        result = GeminiClientInterface.generate(
             system_instruction=SYSTEM_INSTRUCTION,
-            generation_config=genai.GenerationConfig(
-                response_mime_type='application/json',
-                response_schema=MCQ_SCHEMA,
-                temperature=0.5,
-            ),
+            response_schema=MCQ_SCHEMA,
+            prompt=prompt,
         )
 
-        for attempt in range(max_retries):
-            try:
-                logger.info('Trying model %s (attempt %d)', model_name, attempt + 1)
-                response = model.generate_content(user_prompt)
-                data = json.loads(response.text)
+        if result.get('status') == 'invalid_topic':
+            raise ValidationError(
+                result.get('message', 'The topic does not match the subject.')
+            )
 
-                if data.get('status') == 'invalid_topic':
-                    return data
+        raw_questions = result.get('questions', [])
 
-                questions = data.get('questions', [])
-                for q in questions:
-                    if len(q.get('answers', [])) != 4:
-                        raise ValueError('Each question must have exactly 4 options.')
-                    correct_count = sum(1 for a in q['answers'] if a.get('is_correct'))
-                    if correct_count != 1:
-                        raise ValueError(
-                            'Each question must have exactly 1 correct answer.')
+        # Resolve or create storage topic
+        if topic_id is None:
+            storage_topic, _ = Topic.objects.get_or_create(
+                subject=subject, name='General',
+                defaults={'description': 'General questions'},
+            )
+        else:
+            storage_topic = Topic.objects.get(pk=topic_id)
 
-                return data
+        # Persist
+        created_questions = []
+        for q_data in raw_questions:
+            q_obj = Question.objects.create(
+                topic=storage_topic,
+                subtopic=resolved_subtopic,
+                text=q_data['text'],
+                explanation=q_data.get('explanation', ''),
+                difficulty=difficulty,
+            )
+            for a_data in q_data['answers']:
+                Answer.objects.create(
+                    question=q_obj,
+                    text=a_data['text'],
+                    is_correct=a_data['is_correct'],
+                )
+            created_questions.append(q_obj)
 
-            except Exception as e:
-                logger.warning('Model %s attempt %d failed: %s', model_name,
-                               attempt + 1, e)
-                last_error = e
-                if attempt < max_retries - 1:
-                    time.sleep(delays[attempt])
-
-    raise last_error or ValueError('All Gemini models failed after retries.')
+        from .serializers import QuestionSerializer
+        data = QuestionSerializer(created_questions, many=True).data
+        cache.set(cache_key, data, timeout=3600)
+        return {'source': 'generated', 'data': data}
