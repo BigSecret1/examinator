@@ -2,8 +2,7 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from apps.subjects.models import Subject
-from exams.models import Exam, ExamSubject
+from exams.models import Exam, ExamSubject, ExamSubjectCatalog
 from scripts.question_generator import (
     ExamQuestionGenerator,
     QuestionGeneratorReport,
@@ -32,8 +31,8 @@ class QuestionGeneratorReportTests(TestCase):
 class ExamQuestionGeneratorTests(TestCase):
 
     def setUp(self):
-        self.subject_physics, _ = Subject.objects.get_or_create(name='Physics')
-        self.subject_chemistry, _ = Subject.objects.get_or_create(name='Chemistry')
+        self.subject_physics, _ = ExamSubjectCatalog.objects.get_or_create(name='Physics')
+        self.subject_chemistry, _ = ExamSubjectCatalog.objects.get_or_create(name='Chemistry')
         self.exam = Exam.objects.create(name='JEE Main', is_active=True)
         ExamSubject.objects.create(exam=self.exam, subject=self.subject_physics)
         ExamSubject.objects.create(exam=self.exam, subject=self.subject_chemistry)

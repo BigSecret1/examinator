@@ -1,6 +1,12 @@
 from django.contrib import admin
 
-from .models import Exam, ExamQuestion, ExamQuestionAnswer
+from .models import Exam, ExamQuestion, ExamQuestionAnswer, ExamSubjectCatalog
+
+
+@admin.register(ExamSubjectCatalog)
+class ExamSubjectCatalogAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_at')
+    search_fields = ('name',)
 
 
 class ExamQuestionAnswerInline(admin.TabularInline):

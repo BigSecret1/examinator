@@ -6,9 +6,8 @@ from django.http import Http404
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.subjects.models import Subject
 from exams.api.actions import ExamAPIAction, UpstreamError
-from exams.models import Exam, ExamQuestion, ExamQuestionAnswer, ExamSubject
+from exams.models import Exam, ExamQuestion, ExamQuestionAnswer, ExamSubject, ExamSubjectCatalog
 
 
 def _gemini_success_response():
@@ -53,7 +52,7 @@ class ValidateExamSubjectTests(TestCase):
     """Tests for ExamAPIAction.validate_exam_subject."""
 
     def setUp(self):
-        self.subject, _ = Subject.objects.get_or_create(name='Physics')
+        self.subject, _ = ExamSubjectCatalog.objects.get_or_create(name='Physics')
         self.exam = Exam.objects.create(name='JEE Main', is_active=True)
         ExamSubject.objects.create(exam=self.exam, subject=self.subject)
 
@@ -79,7 +78,7 @@ class ValidateExamSubjectTests(TestCase):
             ExamAPIAction.validate_exam_subject(self.exam.pk, 99999)
 
     def test_raises_when_subject_not_linked_to_exam(self):
-        other_subject, _ = Subject.objects.get_or_create(name='Chemistry')
+        other_subject, _ = ExamSubjectCatalog.objects.get_or_create(name='Chemistry')
         with self.assertRaises(Http404):
             ExamAPIAction.validate_exam_subject(self.exam.pk, other_subject.pk)
 
@@ -91,7 +90,7 @@ class GetDailyQuestionsFromCacheTests(TestCase):
     """Tests for cache hit path."""
 
     def setUp(self):
-        self.subject, _ = Subject.objects.get_or_create(name='Physics')
+        self.subject, _ = ExamSubjectCatalog.objects.get_or_create(name='Physics')
         self.exam = Exam.objects.create(name='JEE Cache Test', is_active=True)
         ExamSubject.objects.create(exam=self.exam, subject=self.subject)
 
@@ -115,7 +114,7 @@ class GetDailyQuestionsFromDBTests(TestCase):
     """Tests for DB hit path (questions generated yesterday)."""
 
     def setUp(self):
-        self.subject, _ = Subject.objects.get_or_create(name='Physics')
+        self.subject, _ = ExamSubjectCatalog.objects.get_or_create(name='Physics')
         self.exam = Exam.objects.create(name='JEE DB Test', is_active=True)
         ExamSubject.objects.create(exam=self.exam, subject=self.subject)
 
@@ -173,7 +172,7 @@ class GenerateDailyQuestionsTests(TestCase):
     """Tests for ExamAPIAction.generate_daily_questions."""
 
     def setUp(self):
-        self.subject, _ = Subject.objects.get_or_create(name='Physics')
+        self.subject, _ = ExamSubjectCatalog.objects.get_or_create(name='Physics')
         self.exam = Exam.objects.create(name='JEE Gen Test', is_active=True)
         ExamSubject.objects.create(exam=self.exam, subject=self.subject)
 

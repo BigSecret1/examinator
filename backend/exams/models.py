@@ -30,7 +30,7 @@ class Exam(models.Model):
     official_url = models.URLField(blank=True)
     is_active = models.BooleanField(default=True)
     subjects = models.ManyToManyField(
-        'subjects.Subject',
+        ExamSubjectCatalog,
         through='ExamSubject',
         blank=True,
         related_name='exams',
@@ -52,7 +52,7 @@ class ExamSubject(models.Model):
         related_name='exam_subjects',
     )
     subject = models.ForeignKey(
-        'subjects.Subject',
+        ExamSubjectCatalog,
         on_delete=models.CASCADE,
         related_name='exam_subjects',
     )
@@ -83,7 +83,7 @@ class ExamQuestion(models.Model):
         related_name='exam_questions',
     )
     subject = models.ForeignKey(
-        'subjects.Subject',
+        ExamSubjectCatalog,
         on_delete=models.CASCADE,
         related_name='exam_questions',
     )

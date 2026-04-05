@@ -9,8 +9,9 @@ from django.utils import timezone
 from rest_framework import status as http_status
 from rest_framework.exceptions import APIException
 
-from apps.subjects.models import Subject
-from exams.models import Exam, ExamQuestion, ExamQuestionAnswer, ExamSubject
+from exams.models import (
+    Exam, ExamQuestion, ExamQuestionAnswer, ExamSubject, ExamSubjectCatalog,
+)
 from geminiclient.api.interfaces import GeminiClientInterface
 
 from .utils import MCQ_SCHEMA, SYSTEM_INSTRUCTION, USER_PROMPT_TEMPLATE
@@ -40,7 +41,7 @@ class ExamAPIAction:
     @staticmethod
     def validate_exam_subject(exam_id, subject_id):
         exam = get_object_or_404(Exam, pk=exam_id, is_active=True)
-        subject = get_object_or_404(Subject, pk=subject_id)
+        subject = get_object_or_404(ExamSubjectCatalog, pk=subject_id)
         get_object_or_404(ExamSubject, exam=exam, subject=subject)
         return exam, subject
 

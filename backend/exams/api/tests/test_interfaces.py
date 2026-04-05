@@ -2,15 +2,14 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from apps.subjects.models import Subject
 from exams.api.interfaces import ExamInterface
-from exams.models import Exam, ExamSubject
+from exams.models import Exam, ExamSubject, ExamSubjectCatalog
 
 
 class ExamInterfaceTests(TestCase):
 
     def setUp(self):
-        self.subject, _ = Subject.objects.get_or_create(name='Physics')
+        self.subject, _ = ExamSubjectCatalog.objects.get_or_create(name='Physics')
         self.exam = Exam.objects.create(name='JEE Main', is_active=True)
         ExamSubject.objects.create(exam=self.exam, subject=self.subject)
 
