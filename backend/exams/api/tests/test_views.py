@@ -6,8 +6,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.subjects.models import Subject
-from exams.models import Exam, ExamQuestion, ExamQuestionAnswer, ExamSubject
+from exams.models import Exam, ExamQuestion, ExamQuestionAnswer, ExamSubject, ExamSubjectCatalog
 
 
 def _seed_yesterday_questions(exam, subject, difficulty, count):
@@ -89,7 +88,7 @@ class ExamDetailViewTests(APITestCase):
     """Tests for GET /api/exams/<id>/ (detail endpoint)."""
 
     def setUp(self):
-        self.subject, _ = Subject.objects.get_or_create(name='Mathematics')
+        self.subject, _ = ExamSubjectCatalog.objects.get_or_create(name='Mathematics')
         self.exam = Exam.objects.create(
             name='JEE Advanced',
             description='Engineering entrance exam',
@@ -166,7 +165,7 @@ class ExamDailyQuestionsAPIViewParamTests(APITestCase):
     """Tests for param validation on GET /api/exams/<id>/daily-questions/."""
 
     def setUp(self):
-        self.subject, _ = Subject.objects.get_or_create(name='Physics')
+        self.subject, _ = ExamSubjectCatalog.objects.get_or_create(name='Physics')
         self.exam = Exam.objects.create(name='NEET', is_active=True)
         ExamSubject.objects.create(exam=self.exam, subject=self.subject)
         self.url = reverse(
@@ -214,7 +213,7 @@ class ExamDailyQuestionsAPIViewSuccessTests(APITestCase):
     """Tests for successful daily-questions serving (read-only, yesterday's data)."""
 
     def setUp(self):
-        self.subject, _ = Subject.objects.get_or_create(name='Physics')
+        self.subject, _ = ExamSubjectCatalog.objects.get_or_create(name='Physics')
         self.exam = Exam.objects.create(name='NEET Success', is_active=True)
         ExamSubject.objects.create(exam=self.exam, subject=self.subject)
         self.url = reverse(
@@ -264,7 +263,7 @@ class ExamDailyQuestionsAPIViewErrorTests(APITestCase):
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_inactive_exam_returns_404(self):
-        subject, _ = Subject.objects.get_or_create(name='Physics')
+        subject, _ = ExamSubjectCatalog.objects.get_or_create(name='Physics')
         exam = Exam.objects.create(name='Inactive Exam', is_active=False)
         url = reverse('exam-daily-questions', kwargs={'exam_id': exam.pk})
         response = self.client.get(url, {'subject': subject.pk})
@@ -278,9 +277,9 @@ class ExamSubjectsAPIViewTests(APITestCase):
         self.exam = Exam.objects.create(
             name='NEET Subjects', is_active=True,
         )
-        self.physics, _ = Subject.objects.get_or_create(name='Physics')
-        self.chemistry, _ = Subject.objects.get_or_create(name='Chemistry')
-        self.biology, _ = Subject.objects.get_or_create(name='Biology')
+        self.physics, _ = ExamSubjectCatalog.objects.get_or_create(name='Physics')
+        self.chemistry, _ = ExamSubjectCatalog.objects.get_or_create(name='Chemistry')
+        self.biology, _ = ExamSubjectCatalog.objects.get_or_create(name='Biology')
         ExamSubject.objects.create(
             exam=self.exam, subject=self.physics, is_optional=False,
         )

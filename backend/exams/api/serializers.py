@@ -1,11 +1,19 @@
 from rest_framework import serializers
 
-from apps.subjects.api.serializers import SubjectSerializer
-from ..models import Exam, ExamQuestion, ExamQuestionAnswer, ExamSubject
+from ..models import (
+    Exam, ExamQuestion, ExamQuestionAnswer, ExamSubject, ExamSubjectCatalog,
+)
+
+
+class ExamSubjectCatalogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExamSubjectCatalog
+        fields = ['id', 'name', 'description', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
 
 class ExamSubjectSerializer(serializers.ModelSerializer):
-    subject = SubjectSerializer(read_only=True)
+    subject = ExamSubjectCatalogSerializer(read_only=True)
 
     class Meta:
         model = ExamSubject
