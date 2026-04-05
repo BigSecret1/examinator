@@ -115,7 +115,7 @@ def generate_questions(
             generation_config=genai.GenerationConfig(
                 response_mime_type='application/json',
                 response_schema=MCQ_SCHEMA,
-                temperature=0.7,
+                temperature=0.5,
             ),
         )
 
