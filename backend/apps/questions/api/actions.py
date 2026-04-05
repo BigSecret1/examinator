@@ -20,7 +20,30 @@ logger = logging.getLogger(__name__)
 
 
 class QuestionAPIAction:
-    """Business logic layer for subject-based question operations."""
+
+    @staticmethod
+    def _persist_answers(question, answers_data):
+        for a_data in answers_data:
+            Answer.objects.create(
+                question=question,
+                text=a_data['text'],
+                is_correct=a_data['is_correct'],
+            )
+
+    @staticmethod
+    def _persist_questions(raw_questions, topic, subtopic, difficulty):
+        created = []
+        for q_data in raw_questions:
+            q_obj = Question.objects.create(
+                topic=topic,
+                subtopic=subtopic,
+                text=q_data['text'],
+                explanation=q_data.get('explanation', ''),
+                difficulty=difficulty,
+            )
+            QuestionAPIAction._persist_answers(q_obj, q_data['answers'])
+            created.append(q_obj)
+        return created
 
     @staticmethod
     def get_daily_questions(
@@ -110,22 +133,9 @@ class QuestionAPIAction:
             storage_topic = Topic.objects.get(pk=topic_id)
 
         # Persist
-        created_questions = []
-        for q_data in raw_questions:
-            q_obj = Question.objects.create(
-                topic=storage_topic,
-                subtopic=resolved_subtopic,
-                text=q_data['text'],
-                explanation=q_data.get('explanation', ''),
-                difficulty=difficulty,
-            )
-            for a_data in q_data['answers']:
-                Answer.objects.create(
-                    question=q_obj,
-                    text=a_data['text'],
-                    is_correct=a_data['is_correct'],
-                )
-            created_questions.append(q_obj)
+        created_questions = QuestionAPIAction._persist_questions(
+            raw_questions, storage_topic, resolved_subtopic, difficulty,
+        )
 
         from .serializers import QuestionSerializer
         data = QuestionSerializer(created_questions, many=True).data
