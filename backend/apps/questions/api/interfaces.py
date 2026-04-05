@@ -10,7 +10,7 @@ DIFFICULTIES = ('easy', 'medium', 'hard')
 class QuestionInterface:
 
     @staticmethod
-    def get_daily_questions(
+    def generate_daily_questions(
             subject_id,
             topic_id=None,
             subtopic_id=None,
@@ -18,7 +18,7 @@ class QuestionInterface:
             count=10
     ):
         try:
-            return QuestionAPIAction.get_daily_questions(
+            return QuestionAPIAction.generate_daily_questions(
                 subject_id=subject_id,
                 topic_id=topic_id,
                 subtopic_id=subtopic_id,
@@ -27,7 +27,7 @@ class QuestionInterface:
             )
         except Exception as exc:
             logger.exception(
-                'get_daily_questions failed subject=%s topic=%s difficulty=%s',
+                'generate_daily_questions failed subject=%s topic=%s difficulty=%s',
                 subject_id, topic_id, difficulty,
             )
             return {'error': str(exc)}

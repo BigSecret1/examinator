@@ -11,19 +11,19 @@ class QuestionInterfaceTests(TestCase):
     def setUp(self):
         self.subject = Subject.objects.create(name='Physics')
 
-    @patch('apps.questions.api.interfaces.QuestionAPIAction.get_daily_questions')
+    @patch('apps.questions.api.interfaces.QuestionAPIAction.generate_daily_questions')
     def test_returns_action_result_on_success(self, mock_action):
         mock_action.return_value = {
-            'source': 'generated',
-            'data': [{'id': 1}],
+            'status': 'generated',
+            'count': 10,
         }
 
-        result = QuestionInterface.get_daily_questions(
+        result = QuestionInterface.generate_daily_questions(
             subject_id=self.subject.pk, difficulty='easy',
         )
 
-        self.assertEqual(result['source'], 'generated')
-        self.assertEqual(len(result['data']), 1)
+        self.assertEqual(result['status'], 'generated')
+        self.assertEqual(result['count'], 10)
         mock_action.assert_called_once_with(
             subject_id=self.subject.pk,
             topic_id=None,
@@ -32,11 +32,11 @@ class QuestionInterfaceTests(TestCase):
             count=10,
         )
 
-    @patch('apps.questions.api.interfaces.QuestionAPIAction.get_daily_questions')
+    @patch('apps.questions.api.interfaces.QuestionAPIAction.generate_daily_questions')
     def test_passes_all_parameters(self, mock_action):
-        mock_action.return_value = {'source': 'db', 'data': []}
+        mock_action.return_value = {'status': 'generated', 'count': 20}
 
-        QuestionInterface.get_daily_questions(
+        QuestionInterface.generate_daily_questions(
             subject_id=self.subject.pk,
             topic_id=5,
             subtopic_id=7,
@@ -52,11 +52,11 @@ class QuestionInterfaceTests(TestCase):
             count=20,
         )
 
-    @patch('apps.questions.api.interfaces.QuestionAPIAction.get_daily_questions')
+    @patch('apps.questions.api.interfaces.QuestionAPIAction.generate_daily_questions')
     def test_returns_error_dict_on_exception(self, mock_action):
         mock_action.side_effect = RuntimeError('Gemini exploded')
 
-        result = QuestionInterface.get_daily_questions(
+        result = QuestionInterface.generate_daily_questions(
             subject_id=self.subject.pk,
         )
 
