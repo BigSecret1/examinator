@@ -4,7 +4,7 @@
 
 from django.db import models
 
-from apps.subjects.models import SubTopic, Topic
+from apps.subjects.models import Subject, SubTopic, Topic
 
 
 class Question(models.Model):
@@ -17,6 +17,9 @@ class Question(models.Model):
         (DIFFICULTY_HARD, "Hard"),
     ]
 
+    subject = models.ForeignKey(
+        Subject, on_delete=models.CASCADE, related_name='questions',
+    )
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name="questions")
     subtopic = models.ForeignKey(
         SubTopic, on_delete=models.SET_NULL, related_name="questions",

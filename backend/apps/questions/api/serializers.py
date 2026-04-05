@@ -16,7 +16,7 @@ class AnswerSerializer(serializers.ModelSerializer):
 class QuestionSerializer(serializers.ModelSerializer):
     answers = AnswerSerializer(many=True, read_only=True)
     topic_name = serializers.CharField(source="topic.name", read_only=True)
-    subject_name = serializers.CharField(source="topic.subject.name", read_only=True)
+    subject_name = serializers.CharField(source="subject.name", read_only=True)
     subtopic_id = serializers.IntegerField(
         source="subtopic.id",
         read_only=True,
@@ -32,9 +32,10 @@ class QuestionSerializer(serializers.ModelSerializer):
         model = Question
         fields = [
             "id",
+            "subject",
+            "subject_name",
             "topic",
             "topic_name",
-            "subject_name",
             "subtopic_id",
             "subtopic_name",
             "text",

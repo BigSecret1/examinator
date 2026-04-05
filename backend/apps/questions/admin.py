@@ -14,6 +14,6 @@ class AnswerInline(admin.TabularInline):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ["text", "topic", "difficulty", "created_at"]
-    list_filter = ["difficulty", "topic__subject"]
+    list_display = ["text", "subject", "topic", "difficulty", "created_at"]
+    list_filter = ["difficulty", "subject"]
     inlines = [AnswerInline]

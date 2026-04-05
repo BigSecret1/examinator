@@ -43,10 +43,11 @@ class QuestionAPIAction:
             )
 
     @staticmethod
-    def _persist_questions(raw_questions, topic, subtopic, difficulty):
+    def _persist_questions(raw_questions, subject, topic, subtopic, difficulty):
         created = []
         for q_data in raw_questions:
             q_obj = Question.objects.create(
+                subject=subject,
                 topic=topic,
                 subtopic=subtopic,
                 text=q_data['text'],
@@ -90,10 +91,10 @@ class QuestionAPIAction:
             return {'source': 'cache', 'data': cached}
 
         qs = Question.objects.filter(
-            topic__subject=subject,
+            subject=subject,
             difficulty=difficulty,
             created_at__date=yesterday,
-        ).select_related('topic__subject', 'subtopic').prefetch_related('answers')
+        ).select_related('subject', 'topic', 'subtopic').prefetch_related('answers')
 
         if topic_id is not None:
             qs = qs.filter(topic_id=topic_id)
@@ -134,7 +135,7 @@ class QuestionAPIAction:
         today = timezone.localdate()
 
         qs_filter = {
-            'topic__subject': subject,
+            'subject': subject,
             'difficulty': difficulty,
             'created_at__date': today,
         }
@@ -203,7 +204,7 @@ class QuestionAPIAction:
                         )
 
                 created_questions = QuestionAPIAction._persist_questions(
-                    raw_questions, storage_topic, resolved_subtopic, difficulty,
+                    raw_questions, subject, storage_topic, resolved_subtopic, difficulty,
                 )
 
             return {'status': 'generated', 'count': len(created_questions)}

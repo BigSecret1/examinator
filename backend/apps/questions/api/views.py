@@ -20,7 +20,8 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         queryset = Question.objects.select_related(
-            "topic__subject",
+            "subject",
+            "topic",
             "subtopic"
         ).prefetch_related("answers")
         topic_id = self.request.query_params.get("topic")

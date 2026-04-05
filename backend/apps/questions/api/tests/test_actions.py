@@ -30,10 +30,11 @@ def _gemini_success_response(count=1):
 
 def _create_question_for_date(topic, difficulty, date, subtopic=None, count=1):
     """Create questions backdated to a specific date."""
+    subject = topic.subject
     questions = []
     for i in range(count):
         q = Question.objects.create(
-            topic=topic, subtopic=subtopic,
+            subject=subject, topic=topic, subtopic=subtopic,
             text=f'Q{i}', difficulty=difficulty,
         )
         for j in range(4):
@@ -58,7 +59,7 @@ class PersistAnswersTests(TestCase):
         self.subject = Subject.objects.create(name='Physics')
         self.topic = Topic.objects.create(subject=self.subject, name='Mechanics')
         self.question = Question.objects.create(
-            topic=self.topic, text='Test?', difficulty='easy',
+            subject=self.subject, topic=self.topic, text='Test?', difficulty='easy',
         )
 
     def test_creates_answers_for_question(self):
@@ -94,7 +95,7 @@ class PersistQuestionsTests(TestCase):
         raw = _gemini_success_response(count=2)['questions']
 
         created = QuestionAPIAction._persist_questions(
-            raw, self.topic, None, 'medium',
+            raw, self.subject, self.topic, None, 'medium',
         )
 
         self.assertEqual(len(created), 2)
@@ -102,6 +103,7 @@ class PersistQuestionsTests(TestCase):
         for q in created:
             self.assertEqual(q.answers.count(), 4)
             self.assertEqual(q.difficulty, 'medium')
+            self.assertEqual(q.subject, self.subject)
             self.assertEqual(q.topic, self.topic)
             self.assertIsNone(q.subtopic)
 
@@ -110,7 +112,7 @@ class PersistQuestionsTests(TestCase):
         raw = _gemini_success_response(count=1)['questions']
 
         created = QuestionAPIAction._persist_questions(
-            raw, self.topic, subtopic, 'hard',
+            raw, self.subject, self.topic, subtopic, 'hard',
         )
 
         self.assertEqual(created[0].subtopic, subtopic)
@@ -120,14 +122,14 @@ class PersistQuestionsTests(TestCase):
         raw = _gemini_success_response(count=1)['questions']
 
         created = QuestionAPIAction._persist_questions(
-            raw, self.topic, None, 'easy',
+            raw, self.subject, self.topic, None, 'easy',
         )
 
         self.assertEqual(created[0].explanation, '0+0 equals 0.')
 
     def test_empty_raw_questions_returns_empty_list(self):
         created = QuestionAPIAction._persist_questions(
-            [], self.topic, None, 'easy',
+            [], self.subject, self.topic, None, 'easy',
         )
         self.assertEqual(created, [])
         self.assertEqual(Question.objects.count(), 0)
@@ -229,7 +231,8 @@ class GetDailyQuestionsDBTests(TestCase):
         # Create questions dated today — should NOT be returned
         for i in range(10):
             q = Question.objects.create(
-                topic=self.topic, text=f'Q{i}', difficulty='medium',
+                subject=self.subject, topic=self.topic,
+                text=f'Q{i}', difficulty='medium',
             )
             for j in range(4):
                 Answer.objects.create(
@@ -359,7 +362,8 @@ class GenerateDailyQuestionsTests(TestCase):
         # Create enough questions for today
         for i in range(10):
             q = Question.objects.create(
-                topic=self.topic, text=f'Q{i}', difficulty='medium',
+                subject=self.subject, topic=self.topic,
+                text=f'Q{i}', difficulty='medium',
             )
             Answer.objects.create(question=q, text='A', is_correct=True)
 
