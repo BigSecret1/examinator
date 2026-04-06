@@ -25,7 +25,7 @@ export default function Home() {
       .finally(() => setSubjectsLoading(false));
   }, []);
 
-  async function handleStart(subjectId: number, topicId: string | number, difficulty: Difficulty, subtopicId: string | number = "all") {
+  async function handleStart(subjectId: number, topicId: number | null, difficulty: Difficulty, subtopicId: number | null = null) {
     setLoading(true);
     setError(null);
     try {

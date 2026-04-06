@@ -6,8 +6,8 @@ export interface Answer {
 
 export interface Question {
   id: number;
-  topic: number;
-  topic_name: string;
+  topic: number | null;
+  topic_name: string | null;
   subject_name: string;
   subtopic_id: number | null;
   subtopic_name: string | null;

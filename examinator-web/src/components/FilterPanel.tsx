@@ -5,15 +5,15 @@ import type { Subject, Topic, SubTopic, Difficulty } from "@/types";
 
 interface Props {
   subjects: Subject[];
-  onStart: (subjectId: number, topicId: string | number, difficulty: Difficulty, subtopicId: string | number) => void;
+  onStart: (subjectId: number, topicId: number | null, difficulty: Difficulty, subtopicId: number | null) => void;
   loading: boolean;
 }
 
 export default function FilterPanel({ subjects, onStart, loading }: Props) {
   const [search, setSearch] = useState("");
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-  const [selectedTopic, setSelectedTopic] = useState<string | number>("all");
-  const [selectedSubtopic, setSelectedSubtopic] = useState<string | number>("all");
+  const [selectedTopic, setSelectedTopic] = useState<number | null>(null);
+  const [selectedSubtopic, setSelectedSubtopic] = useState<number | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -34,8 +34,8 @@ export default function FilterPanel({ subjects, onStart, loading }: Props) {
 
   const topics: Topic[] = selectedSubject?.topics ?? [];
   const subtopics: SubTopic[] =
-    selectedTopic !== "all"
-      ? topics.find((t) => String(t.id) === String(selectedTopic))?.subtopics ?? []
+    selectedTopic !== null
+      ? topics.find((t) => t.id === selectedTopic)?.subtopics ?? []
       : [];
 
   return (
@@ -91,8 +91,8 @@ export default function FilterPanel({ subjects, onStart, loading }: Props) {
                           type="button"
                           onClick={() => {
                             setSelectedSubject(s);
-                            setSelectedTopic("all");
-                            setSelectedSubtopic("all");
+                            setSelectedTopic(null);
+                            setSelectedSubtopic(null);
                             setDropdownOpen(false);
                             setSearch("");
                           }}
@@ -123,15 +123,16 @@ export default function FilterPanel({ subjects, onStart, loading }: Props) {
           </label>
           <div className="relative">
             <select
-              value={selectedTopic}
+              value={selectedTopic ?? ""}
               onChange={(e) => {
-                setSelectedTopic(e.target.value);
-                setSelectedSubtopic("all");
+                const val = e.target.value;
+                setSelectedTopic(val === "" ? null : Number(val));
+                setSelectedSubtopic(null);
               }}
               disabled={!selectedSubject}
               className="w-full bg-surface-light border border-surface-lighter rounded-xl px-4 pr-10 py-3 text-text-primary hover:border-secondary/50 focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed appearance-none"
             >
-              <option value="all">All Topics</option>
+              <option value="">All Topics</option>
               {topics.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
@@ -156,12 +157,15 @@ export default function FilterPanel({ subjects, onStart, loading }: Props) {
           </label>
           <div className="relative">
             <select
-              value={selectedSubtopic}
-              onChange={(e) => setSelectedSubtopic(e.target.value)}
-              disabled={selectedTopic === "all"}
+              value={selectedSubtopic ?? ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedSubtopic(val === "" ? null : Number(val));
+              }}
+              disabled={selectedTopic === null}
               className="w-full bg-surface-light border border-surface-lighter rounded-xl px-4 pr-10 py-3 text-text-primary hover:border-secondary/50 focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed appearance-none"
             >
-              <option value="all">All Subtopics</option>
+              <option value="">All Subtopics</option>
               {subtopics.map((st) => (
                 <option key={st.id} value={st.id}>
                   {st.name}
