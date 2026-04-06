@@ -1,6 +1,8 @@
 import logging
 from abc import ABC, abstractmethod
 
+from apps.questions.api.interfaces import QuestionInterface
+from apps.subjects.models import Subject
 from exams.api.interfaces import ExamInterface, DIFFICULTIES
 from exams.models import ExamSubject
 
@@ -60,14 +62,17 @@ class BaseQuestionGenerator(ABC):
         )
         if 'error' in result:
             self.report.add_failure(
-                combo['exam_name'], combo['subject_name'],
-                difficulty, result['error'],
+                combo['exam_name'],
+                combo['subject_name'],
+                difficulty,
+                result['error'],
             )
         else:
             self.report.add_success(
                 combo['exam_name'],
                 combo['subject_name'],
-                difficulty, result.get('source', 'unknown'),
+                difficulty,
+                result.get('source', 'unknown'),
                 len(result.get('data', [])),
             )
 
@@ -96,3 +101,61 @@ class ExamQuestionGenerator(BaseQuestionGenerator):
             }
             for row in rows
         ]
+
+
+class DailyQuestionGenerator(BaseQuestionGenerator):
+
+    def get_combinations(self):
+        combos = []
+        subjects = Subject.objects.prefetch_related(
+            'topics__subtopics',
+        ).all()
+        for subject in subjects:
+            # Subject-only (no topic, no subtopic)
+            combos.append({
+                'subject_id': subject.id,
+                'subject_name': subject.name,
+                'topic_id': None,
+                'subtopic_id': None,
+            })
+            for topic in subject.topics.all():
+                # Subject + Topic (no subtopic)
+                combos.append({
+                    'subject_id': subject.id,
+                    'subject_name': subject.name,
+                    'topic_id': topic.id,
+                    'subtopic_id': None,
+                })
+                for subtopic in topic.subtopics.all():
+                    # Subject + Topic + SubTopic
+                    combos.append({
+                        'subject_id': subject.id,
+                        'subject_name': subject.name,
+                        'topic_id': topic.id,
+                        'subtopic_id': subtopic.id,
+                    })
+        return combos
+
+    def _generate(self, combo, difficulty):
+        result = QuestionInterface.generate_daily_questions(
+            subject_id=combo['subject_id'],
+            topic_id=combo['topic_id'],
+            subtopic_id=combo['subtopic_id'],
+            difficulty=difficulty,
+            count=self.count,
+        )
+        if 'error' in result:
+            self.report.add_failure(
+                'daily',
+                combo['subject_name'],
+                difficulty,
+                result['error'],
+            )
+        else:
+            self.report.add_success(
+                'daily',
+                combo['subject_name'],
+                difficulty,
+                result.get('status', 'unknown'),
+                result.get('count', 0),
+            )
