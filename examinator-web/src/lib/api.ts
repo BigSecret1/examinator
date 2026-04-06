@@ -18,16 +18,20 @@ export async function getSubjects() {
 
 export async function getDailyQuestions(
   subjectId: number,
-  topicId: string | number,
+  topicId: number | null,
   difficulty: string,
-  subtopicId: string | number = "all",
+  subtopicId: number | null = null,
 ) {
   const params = new URLSearchParams({
     subject: String(subjectId),
-    topic: String(topicId),
     difficulty,
-    subtopic: String(subtopicId),
   });
+  if (topicId !== null) {
+    params.set("topic", String(topicId));
+  }
+  if (subtopicId !== null) {
+    params.set("subtopic", String(subtopicId));
+  }
   const data = await fetchJSON<import("@/types").Question[]>(
     `${API_URL}/questions/daily/?${params}`,
   );

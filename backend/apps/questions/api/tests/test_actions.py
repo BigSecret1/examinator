@@ -6,7 +6,7 @@ from django.http import Http404
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.questions.api.actions import QuestionAPIAction, UpstreamError
+from apps.questions.api.actions import QuestionAPIAction, QuestionScope, UpstreamError
 from apps.questions.models import Answer, Question
 from apps.subjects.models import Subject, SubTopic, Topic
 
@@ -28,9 +28,8 @@ def _gemini_success_response(count=1):
     return {'status': 'success', 'questions': questions}
 
 
-def _create_question_for_date(topic, difficulty, date, subtopic=None, count=1):
+def _create_question_for_date(subject, difficulty, date, topic=None, subtopic=None, count=1):
     """Create questions backdated to a specific date."""
-    subject = topic.subject
     questions = []
     for i in range(count):
         q = Question.objects.create(
@@ -93,10 +92,9 @@ class PersistQuestionsTests(TestCase):
 
     def test_creates_questions_with_answers(self):
         raw = _gemini_success_response(count=2)['questions']
+        scope = QuestionScope(subject=self.subject, topic=self.topic)
 
-        created = QuestionAPIAction._persist_questions(
-            raw, self.subject, self.topic, None, 'medium',
-        )
+        created = QuestionAPIAction._persist_questions(raw, scope, 'medium')
 
         self.assertEqual(len(created), 2)
         self.assertEqual(Question.objects.count(), 2)
@@ -110,29 +108,34 @@ class PersistQuestionsTests(TestCase):
     def test_sets_subtopic_when_provided(self):
         subtopic = SubTopic.objects.create(topic=self.topic, name='Kinematics')
         raw = _gemini_success_response(count=1)['questions']
+        scope = QuestionScope(subject=self.subject, topic=self.topic, subtopic=subtopic)
 
-        created = QuestionAPIAction._persist_questions(
-            raw, self.subject, self.topic, subtopic, 'hard',
-        )
+        created = QuestionAPIAction._persist_questions(raw, scope, 'hard')
 
         self.assertEqual(created[0].subtopic, subtopic)
         self.assertEqual(created[0].difficulty, 'hard')
 
     def test_stores_explanation(self):
         raw = _gemini_success_response(count=1)['questions']
+        scope = QuestionScope(subject=self.subject, topic=self.topic)
 
-        created = QuestionAPIAction._persist_questions(
-            raw, self.subject, self.topic, None, 'easy',
-        )
+        created = QuestionAPIAction._persist_questions(raw, scope, 'easy')
 
         self.assertEqual(created[0].explanation, '0+0 equals 0.')
 
     def test_empty_raw_questions_returns_empty_list(self):
-        created = QuestionAPIAction._persist_questions(
-            [], self.subject, self.topic, None, 'easy',
-        )
+        scope = QuestionScope(subject=self.subject, topic=self.topic)
+        created = QuestionAPIAction._persist_questions([], scope, 'easy')
         self.assertEqual(created, [])
         self.assertEqual(Question.objects.count(), 0)
+
+    def test_stores_null_topic_when_scope_has_no_topic(self):
+        raw = _gemini_success_response(count=1)['questions']
+        scope = QuestionScope(subject=self.subject)
+
+        created = QuestionAPIAction._persist_questions(raw, scope, 'easy')
+
+        self.assertIsNone(created[0].topic)
 
 
 # ── get_daily_questions: resolution errors ──
@@ -209,7 +212,7 @@ class GetDailyQuestionsDBTests(TestCase):
 
     def test_returns_yesterday_questions_from_db(self):
         _create_question_for_date(
-            self.topic, 'medium', self.yesterday, count=10,
+            self.subject, 'medium', self.yesterday, count=10,
         )
 
         result = QuestionAPIAction.get_daily_questions(
@@ -231,7 +234,7 @@ class GetDailyQuestionsDBTests(TestCase):
         # Create questions dated today — should NOT be returned
         for i in range(10):
             q = Question.objects.create(
-                subject=self.subject, topic=self.topic,
+                subject=self.subject, topic=None,
                 text=f'Q{i}', difficulty='medium',
             )
             for j in range(4):
@@ -251,10 +254,10 @@ class GetDailyQuestionsDBTests(TestCase):
             subject=self.subject, name='Thermodynamics',
         )
         _create_question_for_date(
-            self.topic, 'easy', self.yesterday, count=10,
+            self.subject, 'easy', self.yesterday, topic=self.topic, count=10,
         )
         _create_question_for_date(
-            other_topic, 'easy', self.yesterday, count=10,
+            self.subject, 'easy', self.yesterday, topic=other_topic, count=10,
         )
 
         result = QuestionAPIAction.get_daily_questions(
@@ -306,16 +309,18 @@ class GenerateDailyQuestionsTests(TestCase):
         self.assertEqual(Answer.objects.count(), 40)
 
     @patch('apps.questions.api.actions.GeminiClientInterface.generate')
-    def test_creates_general_topic_when_no_topic_id(self, mock_generate):
+    def test_stores_null_topic_when_no_topic_id(self, mock_generate):
         mock_generate.return_value = _gemini_success_response(count=1)
 
         QuestionAPIAction.generate_daily_questions(
             subject_id=self.subject.pk, count=1,
         )
 
-        general = Topic.objects.filter(subject=self.subject, name='General')
-        self.assertTrue(general.exists())
-        self.assertEqual(Question.objects.first().topic.name, 'General')
+        q = Question.objects.first()
+        self.assertIsNone(q.topic)
+        self.assertFalse(
+            Topic.objects.filter(subject=self.subject, name='General').exists(),
+        )
 
     @patch('apps.questions.api.actions.GeminiClientInterface.generate')
     def test_uses_specified_topic_for_storage(self, mock_generate):
@@ -359,7 +364,7 @@ class GenerateDailyQuestionsTests(TestCase):
 
     @patch('apps.questions.api.actions.GeminiClientInterface.generate')
     def test_skips_when_already_generated_today(self, mock_generate):
-        # Create enough questions for today
+        # Create enough questions for today with specific topic
         for i in range(10):
             q = Question.objects.create(
                 subject=self.subject, topic=self.topic,
@@ -370,6 +375,26 @@ class GenerateDailyQuestionsTests(TestCase):
         result = QuestionAPIAction.generate_daily_questions(
             subject_id=self.subject.pk,
             topic_id=self.topic.pk,
+            difficulty='medium',
+            count=10,
+        )
+
+        self.assertEqual(result['status'], 'skipped')
+        self.assertEqual(result['reason'], 'already_generated')
+        mock_generate.assert_not_called()
+
+    @patch('apps.questions.api.actions.GeminiClientInterface.generate')
+    def test_skips_when_already_generated_today_no_topic(self, mock_generate):
+        # Create enough questions for today with topic=None
+        for i in range(10):
+            q = Question.objects.create(
+                subject=self.subject, topic=None,
+                text=f'Q{i}', difficulty='medium',
+            )
+            Answer.objects.create(question=q, text='A', is_correct=True)
+
+        result = QuestionAPIAction.generate_daily_questions(
+            subject_id=self.subject.pk,
             difficulty='medium',
             count=10,
         )
