@@ -116,6 +116,7 @@ class ExamAPIAction:
                     f'Gemini returned {len(raw_questions)} questions but '
                     f'{count} were requested. Aborting to avoid partial data.'
                 )
+            raw_questions = raw_questions[:count]
 
             created_questions = []
 

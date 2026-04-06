@@ -81,8 +81,9 @@ class QuestionScope:
     def apply_filters(self, qs: QuerySet) -> QuerySet:
         """Apply topic/subtopic filters.
 
-        None means 'all' — filter for NULL (questions generated without
-        a specific topic/subtopic).
+        When a topic/subtopic is set, filter for that specific row.
+        When None, filter for NULL — i.e. questions generated without
+        a specific topic/subtopic (unscoped questions), not all rows.
         """
         if self.topic is not None:
             qs = qs.filter(topic=self.topic)
@@ -216,6 +217,7 @@ class QuestionAPIAction:
                     f'Gemini returned {len(raw_questions)} questions but '
                     f'{count} were requested. Aborting to avoid partial data.'
                 )
+            raw_questions = raw_questions[:count]
 
             with transaction.atomic():
                 for q_data in raw_questions:

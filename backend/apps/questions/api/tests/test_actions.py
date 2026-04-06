@@ -28,17 +28,29 @@ def _gemini_success_response(count=1):
     return {'status': 'success', 'questions': questions}
 
 
-def _create_question_for_date(subject, difficulty, date, topic=None, subtopic=None, count=1):
+def _create_question_for_date(
+        subject,
+        difficulty,
+        date,
+        topic=None,
+        subtopic=None,
+        count=1
+):
     """Create questions backdated to a specific date."""
     questions = []
     for i in range(count):
         q = Question.objects.create(
-            subject=subject, topic=topic, subtopic=subtopic,
-            text=f'Q{i}', difficulty=difficulty,
+            subject=subject,
+            topic=topic,
+            subtopic=subtopic,
+            text=f'Q{i}',
+            difficulty=difficulty,
         )
         for j in range(4):
             Answer.objects.create(
-                question=q, text=f'A{j}', is_correct=(j == 0),
+                question=q,
+                text=f'A{j}',
+                is_correct=(j == 0),
             )
         questions.append(q)
     Question.objects.filter(
@@ -47,9 +59,6 @@ def _create_question_for_date(subject, difficulty, date, topic=None, subtopic=No
         timezone.datetime.combine(date, timezone.datetime.min.time()),
     ))
     return questions
-
-
-# ── _persist_answers ──
 
 
 class PersistAnswersTests(TestCase):
@@ -79,9 +88,6 @@ class PersistAnswersTests(TestCase):
     def test_creates_no_answers_when_empty(self):
         QuestionAPIAction._persist_answers(self.question, [])
         self.assertEqual(self.question.answers.count(), 0)
-
-
-# ── _persist_questions ──
 
 
 class PersistQuestionsTests(TestCase):
@@ -138,9 +144,6 @@ class PersistQuestionsTests(TestCase):
         self.assertIsNone(created[0].topic)
 
 
-# ── get_daily_questions: resolution errors ──
-
-
 class GetDailyQuestionsResolutionTests(TestCase):
 
     def setUp(self):
@@ -171,9 +174,6 @@ class GetDailyQuestionsResolutionTests(TestCase):
                 topic_id=self.topic.pk,
                 subtopic_id=99999,
             )
-
-
-# ── get_daily_questions: cache ──
 
 
 class GetDailyQuestionsCacheTests(TestCase):
