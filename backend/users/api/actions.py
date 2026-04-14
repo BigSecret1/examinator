@@ -1,9 +1,12 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from ..models import User
+from ..models import UserProfile
+
+User = get_user_model()
 
 
 class GoogleOAuthAction:
@@ -30,16 +33,23 @@ class GoogleOAuthAction:
     @staticmethod
     def get_or_create_user(profile):
         try:
-            return User.objects.get(google_id=profile['google_id'])
-        except User.DoesNotExist:
-            return User.objects.create_user(
+            user_profile = UserProfile.objects.select_related('user').get(
+                google_id=profile['google_id'],
+            )
+            return user_profile.user
+        except UserProfile.DoesNotExist:
+            user = User.objects.create_user(
                 username=profile['email'].split('@')[0],
                 email=profile['email'],
-                google_id=profile['google_id'],
                 first_name=profile['first_name'],
                 last_name=profile['last_name'],
+            )
+            UserProfile.objects.create(
+                user=user,
+                google_id=profile['google_id'],
                 avatar_url=profile['avatar_url'],
             )
+            return user
 
     @staticmethod
     def issue_tokens(user):

@@ -1,6 +1,7 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from ..models import User
+User = get_user_model()
 
 
 class GoogleLoginSerializer(serializers.Serializer):
@@ -8,6 +9,12 @@ class GoogleLoginSerializer(serializers.Serializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.CharField(
+            source='profile.avatar_url',
+            default='',
+            read_only=True,
+    )
+
     class Meta:
         model = User
         fields = [

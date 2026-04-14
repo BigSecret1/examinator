@@ -1,14 +1,10 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import User
+from .models import UserProfile
 
 
-@admin.register(User)
-class UserAdmin(BaseUserAdmin):
-    list_display = ('email', 'username', 'first_name', 'last_name', 'is_staff')
-    search_fields = ('email', 'username', 'first_name', 'last_name')
-    ordering = ('email',)
-    fieldsets = BaseUserAdmin.fieldsets + (
-        ('OAuth', {'fields': ('google_id', 'avatar_url')}),
-    )
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'google_id', 'created_at')
+    search_fields = ('user__email', 'google_id')
+    raw_id_fields = ('user',)

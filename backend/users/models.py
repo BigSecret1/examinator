@@ -1,17 +1,20 @@
-from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 from django.db import models
 
 
-class User(AbstractUser):
-    email = models.EmailField(unique=True)
-    google_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
+class UserProfile(models.Model):
+    user = models.OneToOneField(
+            settings.AUTH_USER_MODEL,
+            on_delete=models.CASCADE,
+            related_name='profile',
+    )
+    google_id = models.CharField(max_length=255, unique=True)
     avatar_url = models.URLField(max_length=500, blank=True, default='')
-
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'examinator_user'
+        db_table = 'examinator_users_profile'
 
     def __str__(self):
-        return self.email
+        return self.user.email
