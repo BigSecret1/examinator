@@ -17,3 +17,7 @@ PyYAML==6.0.2
 pytest==8.2.0
 pytest-django==4.8.0
 coverage==7.5.0
+
+# Auth
+djangorestframework-simplejwt==5.5.1
+google-auth==2.49.1
