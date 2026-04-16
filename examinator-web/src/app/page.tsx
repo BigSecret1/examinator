@@ -6,8 +6,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { GoogleLogin } from "@react-oauth/google";
+import { useAuth } from "@/hooks/useAuth";
+import UserAvatar from "@/components/UserAvatar";
 
 export default function Home() {
+  const { user, loading, login } = useAuth();
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -30,6 +35,20 @@ export default function Home() {
             <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-secondary/20 text-secondary border border-secondary/30">
               Beta
             </span>
+          </div>
+          <div>
+            {!loading && (user ? (
+              <UserAvatar />
+            ) : (
+              <GoogleLogin
+                onSuccess={(res) => {
+                  if (res.credential) login(res.credential);
+                }}
+                shape="pill"
+                size="medium"
+                theme="filled_black"
+              />
+            ))}
           </div>
         </div>
       </header>
