@@ -36,72 +36,130 @@ export default function Home() {
               Beta
             </span>
           </div>
-          <div>
-            {!loading && (user ? (
-              <UserAvatar />
-            ) : (
+          {!loading && user && (
+            <UserAvatar />
+          )}
+        </div>
+      </header>
+
+      {!loading && !user ? (
+        /* ── Hero for unauthenticated users ── */
+        <main className="flex-1 flex items-center justify-center px-4">
+          <div className="text-center max-w-lg -mt-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-4 leading-tight">
+              Train Your Brain<span className="text-secondary">.</span>
+            </h2>
+            <p className="text-lg text-text-secondary mb-3">
+              AI-powered practice questions to sharpen your skills and ace your exams.
+            </p>
+            <p className="text-sm text-text-muted mb-10">
+              Pick a subject, choose difficulty, and start practicing — it&apos;s that simple.
+            </p>
+
+            <div className="flex flex-col items-center gap-4">
               <GoogleLogin
                 onSuccess={(res) => {
                   if (res.credential) login(res.credential);
                 }}
                 shape="pill"
-                size="medium"
+                size="large"
                 theme="filled_black"
+                text="continue_with"
+                width="300"
               />
-            ))}
+              <p className="text-xs text-text-muted">
+                Sign in to start practicing. No passwords needed.
+              </p>
+            </div>
+
+            {/* Feature highlights */}
+            <div className="grid grid-cols-4 gap-6 mt-16 text-center">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-secondary/15 flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <p className="text-xs text-text-secondary font-medium">Multiple Subjects</p>
+              </div>
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                </div>
+                <p className="text-xs text-text-secondary font-medium">Exam-Ready Practice</p>
+              </div>
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-warning/15 flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <p className="text-xs text-text-secondary font-medium">All Difficulty Levels</p>
+              </div>
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-success/15 flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-5 h-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <p className="text-xs text-text-secondary font-medium">Daily New Questions</p>
+              </div>
+            </div>
           </div>
-        </div>
-      </header>
-
-      {/* Main */}
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">
-            Train Your Brain<span className="text-secondary">.</span>
-          </h2>
-          <p className="text-text-secondary max-w-md mx-auto">
-            A playground to test your knowledge and keep improving every day.
-          </p>
-        </div>
-
-        <div className="grid gap-6 max-w-2xl mx-auto md:grid-cols-2">
-          {/* Practice by Subject */}
-          <Link
-            href="/practice"
-            className="group bg-surface rounded-2xl p-6 border border-surface-light/30 shadow-xl hover:border-secondary/40 transition-all"
-          >
-            <div className="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-text-primary mb-2 group-hover:text-secondary transition-colors">
-              Practice by Subject
-            </h3>
-            <p className="text-sm text-text-secondary">
-              Build strong fundamentals by focusing on one subject at a time with targeted question sets.
+        </main>
+      ) : (
+        /* ── Dashboard for authenticated users ── */
+        <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-16">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">
+              Welcome back{user?.first_name ? `, ${user.first_name}` : ""}<span className="text-secondary">.</span>
+            </h2>
+            <p className="text-text-secondary max-w-md mx-auto">
+              Pick a mode and start practicing.
             </p>
-          </Link>
+          </div>
 
-          {/* Practice by Exam */}
-          <Link
-            href="/practice/exams"
-            className="group bg-surface rounded-2xl p-6 border border-surface-light/30 shadow-xl hover:border-secondary/40 transition-all"
-          >
-            <div className="w-12 h-12 rounded-xl bg-secondary/15 flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-text-primary mb-2 group-hover:text-secondary transition-colors">
-              Practice by Exam
-            </h3>
-            <p className="text-sm text-text-secondary">
-              Prepare in exam context with subject-wise questions aligned to your selected exam pattern.
-            </p>
-          </Link>
-        </div>
-      </main>
+          <div className="grid gap-6 max-w-2xl mx-auto md:grid-cols-2">
+            {/* Practice by Subject */}
+            <Link
+              href="/practice"
+              className="group bg-surface rounded-2xl p-6 border border-surface-light/30 shadow-xl hover:border-secondary/40 transition-all"
+            >
+              <div className="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-text-primary mb-2 group-hover:text-secondary transition-colors">
+                Practice by Subject
+              </h3>
+              <p className="text-sm text-text-secondary">
+                Build strong fundamentals by focusing on one subject at a time with targeted question sets.
+              </p>
+            </Link>
+
+            {/* Practice by Exam */}
+            <Link
+              href="/practice/exams"
+              className="group bg-surface rounded-2xl p-6 border border-surface-light/30 shadow-xl hover:border-secondary/40 transition-all"
+            >
+              <div className="w-12 h-12 rounded-xl bg-secondary/15 flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-text-primary mb-2 group-hover:text-secondary transition-colors">
+                Practice by Exam
+              </h3>
+              <p className="text-sm text-text-secondary">
+                Prepare in exam context with subject-wise questions aligned to your selected exam pattern.
+              </p>
+            </Link>
+          </div>
+        </main>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-surface-light/30 py-6 text-center text-xs text-text-muted">
