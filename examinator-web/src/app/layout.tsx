@@ -4,6 +4,7 @@
 
 import type { Metadata } from "next";
 import "@/styles/globals.css";
+import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: "Examinator",
@@ -25,7 +26,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen">{children}</body>
+      <body className="min-h-screen">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

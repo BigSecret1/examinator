@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.5",
     "@tailwindcss/postcss": "^4.2.1",
     "next": "15.2.9",
     "postcss": "^8.5.8",

@@ -63,3 +63,19 @@ export interface ExamSubject {
   subject_name: string;
   is_optional: boolean;
 }
+
+export interface User {
+  id: number;
+  email: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  avatar_url: string;
+  date_joined: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  access: string;
+  refresh: string;
+}

@@ -64,3 +64,16 @@ export async function getExamDailyQuestions(
     `${API_URL}/exams/${examId}/daily-questions/?${params}`,
   );
 }
+
+export async function googleLogin(credential: string) {
+  const res = await fetch(`${API_URL}/users/google/login/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ credential }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Login failed: ${body}`);
+  }
+  return res.json() as Promise<import("@/types").AuthResponse>;
+}
