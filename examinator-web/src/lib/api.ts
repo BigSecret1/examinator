@@ -66,7 +66,7 @@ export async function getExamDailyQuestions(
 }
 
 export async function googleLogin(credential: string) {
-  const res = await fetch(`${API_URL}/users/google/login/`, {
+  const res = await fetch(`${API_URL}/auth/google/login/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ credential }),

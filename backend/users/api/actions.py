@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from ..models import UserProfile
@@ -13,11 +14,14 @@ class GoogleOAuthAction:
 
     @staticmethod
     def verify_token(credential):
-        id_info = id_token.verify_oauth2_token(
-            credential,
-            google_requests.Request(),
-            settings.GOOGLE_OAUTH_CLIENT_ID,
-        )
+        try:
+            id_info = id_token.verify_oauth2_token(
+                credential,
+                google_requests.Request(),
+                settings.GOOGLE_OAUTH_CLIENT_ID,
+            )
+        except ValueError as e:
+            raise ValueError(f'Invalid token: {e}')
 
         if id_info['iss'] not in ('accounts.google.com', 'https://accounts.google.com'):
             raise ValueError('Invalid issuer.')
@@ -61,7 +65,11 @@ class GoogleOAuthAction:
 
     @staticmethod
     def authenticate(credential):
-        profile = GoogleOAuthAction.verify_token(credential)
+        try:
+            profile = GoogleOAuthAction.verify_token(credential)
+        except ValueError as e:
+            raise AuthenticationFailed(str(e))
+
         user = GoogleOAuthAction.get_or_create_user(profile)
         tokens = GoogleOAuthAction.issue_tokens(user)
         return {'user': user, **tokens}
