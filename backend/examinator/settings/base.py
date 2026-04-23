@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "apps.questions",
     "exams",
     "users",
+    "geminiclient",
 ]
 
 MIDDLEWARE = [
