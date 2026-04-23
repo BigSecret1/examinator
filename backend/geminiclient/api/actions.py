@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 # Cost per 1M tokens in USD — verify at https://ai.google.dev/pricing
 MODEL_PRICING = {
     'gemini-2.5-flash': {'input': Decimal('0.075'),  'output': Decimal('0.30')},
-    'gemini-2.5-pro':   {'input': Decimal('1.25'),   'output': Decimal('10.00')},
+    # 'gemini-2.5-pro':   {'input': Decimal('1.25'),   'output': Decimal('10.00')},
 }
 MILLION = Decimal('1000000')
 
