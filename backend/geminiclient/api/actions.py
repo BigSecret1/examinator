@@ -32,6 +32,7 @@ class GeminiClientAction:
             models=None,
             max_retries=None,
             caller='',
+            max_output_tokens=None,
     ):
         api_key = settings.GEMINI_API_KEY
         if not api_key:
@@ -45,19 +46,38 @@ class GeminiClientAction:
         self._models = models or self.DEFAULT_MODELS
         self._max_retries = max_retries or self.MAX_RETRIES
         self._caller = caller
+        self._max_output_tokens = max_output_tokens
 
     def _build_model(self, model_name):
+        config_kwargs = {
+            'response_mime_type': 'application/json',
+            'response_schema': self._response_schema,
+            'temperature': self._temperature,
+        }
+        if self._max_output_tokens:
+            config_kwargs['max_output_tokens'] = self._max_output_tokens
+
         return genai.GenerativeModel(
             model_name=model_name,
             system_instruction=self._system_instruction,
-            generation_config=genai.GenerationConfig(
-                response_mime_type='application/json',
-                response_schema=self._response_schema,
-                temperature=self._temperature,
-            ),
+            generation_config=genai.GenerationConfig(**config_kwargs),
         )
 
-    def generate(self, prompt):
+    def generate(self, prompt, inline_files=None):
+        '''Generate a structured response from Gemini.
+
+        Args:
+            prompt: The text prompt (string).
+            inline_files: Optional list of (mime_type, bytes) tuples to send
+                alongside the prompt. Used for multimodal inputs such as PDFs
+                (mime_type='application/pdf') or images.
+        '''
+        parts = []
+        if inline_files:
+            for mime_type, data in inline_files:
+                parts.append({'mime_type': mime_type, 'data': data})
+        parts.append(prompt)
+
         last_error = None
 
         for model_name in self._models:
@@ -70,7 +90,7 @@ class GeminiClientAction:
                         model_name,
                         attempt + 1, )
                     response = model.generate_content(
-                        prompt,
+                        parts,
                         request_options={'timeout': 300},
                     )
                     self._log_cost(model_name, response.usage_metadata)
