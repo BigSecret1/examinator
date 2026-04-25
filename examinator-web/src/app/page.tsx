@@ -11,8 +11,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSignInModal } from "@/hooks/useSignInModal";
 import UserAvatar from "@/components/UserAvatar";
 
-// The post-login destination until the dedicated /notes/new route exists.
-const APP_HOME = "/practice";
+// The authenticated home / dashboard.
+const APP_HOME = "/app";
 
 export default function LandingPage() {
   return (
