@@ -26,7 +26,9 @@ INSTALLED_APPS = [
     "apps.subjects",
     "apps.questions",
     "exams",
+    "notes",
     "users",
+    "geminiclient",
 ]
 
 MIDDLEWARE = [
@@ -101,6 +103,12 @@ CORS_ALLOWED_ORIGINS = config(
 
 # Google Gemini
 GEMINI_API_KEY = config("GEMINI_API_KEY", default="")
+
+# Notes app — per-user daily file upload quota (platform-wide default).
+# Per-user overrides live in notes.UserUploadQuota.
+FILE_UPLOAD_DAILY_LIMIT = config(
+    "FILE_UPLOAD_DAILY_LIMIT", default=5, cast=int
+)
 
 # Google OAuth
 GOOGLE_OAUTH_CLIENT_ID = config("GOOGLE_OAUTH_CLIENT_ID", default="")

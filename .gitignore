@@ -28,6 +28,7 @@ examinator-web/out/
 examinator-web/node_modules/
 examinator-web/.npm
 examinator-web/.eslintcache
+examinator-web/*.tsbuildinfo
 
 # ──────────────────────────────────────────────
 # Django / Python (backend/)
