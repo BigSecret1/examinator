@@ -225,6 +225,54 @@ export async function getNotes() {
   return data.results;
 }
 
+export interface NoteSubtopic {
+  id: number;
+  heading: string;
+  content_md: string;
+  examples: string[];
+  key_takeaways: string[];
+  position: number;
+  created_at: string;
+}
+
+export interface NoteSection {
+  id: number;
+  heading: string;
+  overview: string;
+  position: number;
+  subtopics: NoteSubtopic[];
+  created_at: string;
+}
+
+export interface NoteKeyTerm {
+  id: number;
+  term: string;
+  definition: string;
+  position: number;
+  created_at: string;
+}
+
+export interface NoteFlashcard {
+  id: number;
+  question: string;
+  answer: string;
+  position: number;
+  created_at: string;
+}
+
+export interface NoteFull extends NoteListItem {
+  user: number;
+  learning_objectives: string[];
+  error_message: string;
+  sections: NoteSection[];
+  key_terms: NoteKeyTerm[];
+  flashcards: NoteFlashcard[];
+}
+
+export async function getNote(id: number | string) {
+  return fetchJSON<NoteFull>(`${API_URL}/notes/${id}/`);
+}
+
 export async function uploadNotePdf(
   file: File,
   opts: { forceVision?: boolean } = {},
