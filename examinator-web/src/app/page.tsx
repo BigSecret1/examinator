@@ -2,15 +2,17 @@
 //
 // Licensed under the Apache License, Version 2.0
 
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import type { Metadata } from "next";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { useSignInModal } from "@/hooks/useSignInModal";
+import UserAvatar from "@/components/UserAvatar";
 
-export const metadata: Metadata = {
-  title: "Examinator — Turn any PDF into smart study notes",
-  description:
-    "Upload your textbook, lecture slides, or research paper. Examinator generates structured notes, a key-term glossary, and active-recall flashcards in minutes.",
-};
+// The post-login destination until the dedicated /notes/new route exists.
+const APP_HOME = "/practice";
 
 export default function LandingPage() {
   return (
@@ -29,8 +31,27 @@ export default function LandingPage() {
   );
 }
 
+/* ---------------- Shared CTA hook ---------------- */
+function useStartCTA() {
+  const { user } = useAuth();
+  const { open } = useSignInModal();
+  const router = useRouter();
+
+  return function startCTA() {
+    if (user) {
+      router.push(APP_HOME);
+    } else {
+      open(APP_HOME);
+    }
+  };
+}
+
 /* ---------------- Header ---------------- */
 function SiteHeader() {
+  const { user, loading } = useAuth();
+  const { open } = useSignInModal();
+  const startCTA = useStartCTA();
+
   return (
     <header className="sticky top-0 z-50 border-b border-surface-light/30 bg-primary/80 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -58,18 +79,34 @@ function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link
-            href="/practice"
-            className="hidden sm:inline text-sm text-text-secondary hover:text-text-primary transition"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/practice"
-            className="px-4 py-2 rounded-xl bg-secondary hover:bg-secondary-light text-white text-sm font-semibold shadow-lg shadow-secondary/25 transition"
-          >
-            Get started
-          </Link>
+          {loading ? (
+            <div className="w-9 h-9 rounded-full bg-surface-light animate-pulse" />
+          ) : user ? (
+            <>
+              <Link
+                href={APP_HOME}
+                className="hidden sm:inline px-4 py-2 rounded-xl bg-secondary hover:bg-secondary-light text-white text-sm font-semibold shadow-lg shadow-secondary/25 transition"
+              >
+                Open app
+              </Link>
+              <UserAvatar />
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => open(APP_HOME)}
+                className="hidden sm:inline text-sm text-text-secondary hover:text-text-primary transition"
+              >
+                Sign in
+              </button>
+              <button
+                onClick={startCTA}
+                className="px-4 py-2 rounded-xl bg-secondary hover:bg-secondary-light text-white text-sm font-semibold shadow-lg shadow-secondary/25 transition"
+              >
+                Get started
+              </button>
+            </>
+          )}
         </div>
       </div>
     </header>
@@ -78,6 +115,8 @@ function SiteHeader() {
 
 /* ---------------- Hero ---------------- */
 function Hero() {
+  const startCTA = useStartCTA();
+
   return (
     <section className="relative overflow-hidden">
       {/* glow */}
@@ -107,18 +146,18 @@ function Hero() {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/practice"
+            <button
+              onClick={startCTA}
               className="px-6 py-3 rounded-xl bg-secondary hover:bg-secondary-light text-white font-semibold shadow-lg shadow-secondary/25 transition"
             >
               Upload your first PDF →
-            </Link>
-            <Link
+            </button>
+            <a
               href="#features"
               className="px-6 py-3 rounded-xl bg-surface-light hover:bg-surface-lighter text-text-primary font-semibold border border-surface-lighter transition"
             >
               See how it works
-            </Link>
+            </a>
           </div>
 
           <p className="mt-5 text-xs text-text-muted">
@@ -313,6 +352,7 @@ function FAQ() {
 
 /* ---------------- Final CTA ---------------- */
 function FinalCTA() {
+  const startCTA = useStartCTA();
   return (
     <section className="py-24">
       <div className="max-w-4xl mx-auto px-4">
@@ -323,12 +363,12 @@ function FinalCTA() {
           <p className="mt-4 text-text-secondary max-w-xl mx-auto">
             Upload your first PDF and get your first set of structured notes and flashcards in minutes.
           </p>
-          <Link
-            href="/practice"
+          <button
+            onClick={startCTA}
             className="mt-8 inline-block px-7 py-3.5 rounded-xl bg-secondary hover:bg-secondary-light text-white font-semibold shadow-lg shadow-secondary/30 transition"
           >
             Upload your first PDF →
-          </Link>
+          </button>
         </div>
       </div>
     </section>

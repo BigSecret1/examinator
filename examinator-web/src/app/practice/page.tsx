@@ -6,12 +6,22 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import AuthGuard from "@/components/AuthGuard";
+import UserAvatar from "@/components/UserAvatar";
 import FilterPanel from "@/components/FilterPanel";
 import QuizView from "@/components/QuizView";
 import { getSubjects, getDailyQuestions } from "@/lib/api";
 import type { Subject, Question, Difficulty } from "@/types";
 
-export default function Home() {
+export default function Page() {
+  return (
+    <AuthGuard>
+      <Home />
+    </AuthGuard>
+  );
+}
+
+function Home() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [questions, setQuestions] = useState<Question[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -61,6 +71,7 @@ export default function Home() {
               Beta
             </span>
           </div>
+          <UserAvatar />
         </div>
       </header>
 

@@ -2,12 +2,22 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import AuthGuard from "@/components/AuthGuard";
+import UserAvatar from "@/components/UserAvatar";
 import ExamFilterPanel from "@/components/ExamFilterPanel";
 import QuizView from "@/components/QuizView";
 import { getExamDailyQuestions } from "@/lib/api";
 import type { Question, Difficulty } from "@/types";
 
-export default function ExamsPage() {
+export default function Page() {
+  return (
+    <AuthGuard>
+      <ExamsPage />
+    </AuthGuard>
+  );
+}
+
+function ExamsPage() {
   const [questions, setQuestions] = useState<Question[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +58,7 @@ export default function ExamsPage() {
               Beta
             </span>
           </div>
+          <UserAvatar />
         </div>
       </header>
 
