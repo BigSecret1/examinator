@@ -6,12 +6,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+import UploadModal from "@/components/UploadModal";
 import UserAvatar from "@/components/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const firstName = user?.first_name?.trim() || "there";
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-primary text-text-primary">
@@ -30,10 +33,18 @@ export default function Dashboard() {
           </p>
         </section>
 
-        <UploadCard />
+        <UploadCard onOpen={() => setUploadOpen(true)} />
       </main>
 
       <AppFooter />
+
+      <UploadModal
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onUploaded={() => {
+          // Library wiring will refresh here in a follow-up.
+        }}
+      />
     </div>
   );
 }
@@ -67,7 +78,7 @@ function AppHeader() {
 }
 
 /* ---------------- Upload CTA ---------------- */
-function UploadCard() {
+function UploadCard({ onOpen }: { onOpen: () => void }) {
   return (
     <section className="relative overflow-hidden rounded-3xl border border-secondary/30 bg-gradient-to-br from-secondary/15 via-surface to-accent/10 p-8 sm:p-10">
       <div className="grid lg:grid-cols-[1fr_auto] items-center gap-6">
@@ -85,11 +96,7 @@ function UploadCard() {
         </div>
         <button
           type="button"
-          onClick={() =>
-            alert(
-              "PDF upload is coming next. Stay tuned — your library will populate here.",
-            )
-          }
+          onClick={onOpen}
           className="px-6 py-3.5 rounded-xl bg-secondary hover:bg-secondary-light text-white font-semibold shadow-lg shadow-secondary/30 transition whitespace-nowrap"
         >
           Upload PDF →

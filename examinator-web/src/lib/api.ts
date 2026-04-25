@@ -183,3 +183,79 @@ export async function getCurrentUser() {
   return fetchJSON<import("@/types").User>(`${API_URL}/auth/me/`);
 }
 
+/* ---------------- Notes ---------------- */
+
+export interface NoteQuota {
+  date: string;
+  daily_limit: number;
+  used: number;
+  remaining: number;
+  max_file_size_bytes: number;
+  max_pages: number;
+}
+
+export interface NoteListItem {
+  id: number;
+  title: string;
+  summary: string;
+  source_filename: string;
+  page_count: number;
+  generation_mode: "text" | "vision";
+  status: "pending" | "processing" | "completed" | "failed";
+  created_at: string;
+  updated_at: string;
+}
+
+export type NoteUploadResponse =
+  | {
+      status: "success";
+      note: NoteListItem;
+      page_count: number;
+      generation_mode: "text" | "vision";
+    }
+  | { status: "rejected"; reason: string; page_count: number | null }
+  | { status: "error"; error: string };
+
+export async function getNoteQuota() {
+  return fetchJSON<NoteQuota>(`${API_URL}/notes/quota/`);
+}
+
+export async function getNotes() {
+  const data = await fetchJSON<{ results: NoteListItem[] }>(`${API_URL}/notes/`);
+  return data.results;
+}
+
+export async function uploadNotePdf(
+  file: File,
+  opts: { forceVision?: boolean } = {},
+): Promise<NoteUploadResponse> {
+  const form = new FormData();
+  form.append("file", file);
+  if (opts.forceVision) form.append("force_vision", "true");
+
+  // We need the raw response (not just JSON) to distinguish 201 / 400 / 500.
+  const token = getAccessToken();
+  const headers = new Headers();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+
+  let res = await fetch(`${API_URL}/notes/upload/`, {
+    method: "POST",
+    body: form,
+    headers,
+  });
+  if (res.status === 401) {
+    // Use the same refresh flow available in fetchJSON.
+    const retry = await authedFetch(`${API_URL}/notes/upload/`, {
+      method: "POST",
+      body: form,
+    });
+    res = retry;
+  }
+
+  const json = (await res.json().catch(() => null)) as NoteUploadResponse | null;
+  if (!json) {
+    throw new Error(`Upload failed (HTTP ${res.status}).`);
+  }
+  return json;
+}
+
