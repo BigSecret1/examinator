@@ -6,19 +6,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import AuthGuard from "@/components/AuthGuard";
 import UserAvatar from "@/components/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
 
-export default function Page() {
-  return (
-    <AuthGuard>
-      <Dashboard />
-    </AuthGuard>
-  );
-}
-
-function Dashboard() {
+export default function Dashboard() {
   const { user } = useAuth();
   const firstName = user?.first_name?.trim() || "there";
 
@@ -27,7 +18,6 @@ function Dashboard() {
       <AppHeader />
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-10 space-y-12">
-        {/* Welcome */}
         <section>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">
             Your library
@@ -40,7 +30,6 @@ function Dashboard() {
           </p>
         </section>
 
-        {/* Primary upload CTA */}
         <UploadCard />
       </main>
 
@@ -54,7 +43,7 @@ function AppHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-surface-light/30 bg-primary/80 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/app" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center shadow-lg shadow-secondary/25">
             <Image
               src="/examinator-icon.png"
