@@ -50,7 +50,7 @@ class NotesInterface:
                 page_count=page_count,
                 force_vision=force_vision,
             )
-            note = NotesAPIAction.write_note_to_db(
+            note = NotesAPIAction.persist_note_bundle(
                 user=user,
                 source_filename=file_name,
                 page_count=page_count,
@@ -67,4 +67,3 @@ class NotesInterface:
         except Exception as exc:
             logger.exception('generate_notes_from_pdf failed')
             return {'status': 'error', 'error': str(exc)}
-

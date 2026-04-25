@@ -96,10 +96,13 @@ class NotesAPIAction:
     def is_file_eligible(*, file_name, file_size, page_count):
         if file_name and not file_name.lower().endswith('.pdf'):
             return False, FileUploadActivity.REASON_NOT_PDF
+        
         if file_size is not None and file_size > MAX_FILE_SIZE_BYTES:
             return False, FileUploadActivity.REASON_OVER_SIZE
+
         if page_count is not None and page_count > MAX_PAGES:
             return False, FileUploadActivity.REASON_OVER_PAGES
+        
         return True, FileUploadActivity.REASON_OK
 
     @staticmethod
@@ -161,8 +164,10 @@ class NotesAPIAction:
     def find_pdf_type(*, text, page_count, force_vision=False):
         if force_vision:
             return 'vision'
+        
         if not page_count:
             return 'vision'
+        
         density = len(text.strip()) / page_count
         return 'vision' if density < MIN_DENSITY_CHARS_PER_PAGE else 'text'
 
@@ -196,53 +201,81 @@ class NotesAPIAction:
         return result, mode
 
     @staticmethod
-    def write_note_to_db(*, user, source_filename, page_count, mode, result):
-        with transaction.atomic():
-            note = Note.objects.create(
-                user=user,
-                title=result.get('title', 'Notes'),
-                summary=result.get('summary', ''),
-                learning_objectives=result.get('learning_objectives', []),
-                source_filename=source_filename or '',
-                page_count=page_count or 0,
-                generation_mode=mode,
-                status=Note.STATUS_COMPLETED,
-                error_message='',
+    def create_note(*, user, source_filename, page_count, mode, result):
+        return Note.objects.create(
+            user=user,
+            title=result.get('title', 'Notes'),
+            summary=result.get('summary', ''),
+            learning_objectives=result.get('learning_objectives', []),
+            source_filename=source_filename or '',
+            page_count=page_count or 0,
+            generation_mode=mode,
+            status=Note.STATUS_COMPLETED,
+            error_message='',
+        )
+
+    @staticmethod
+    def save_key_terms(*, note, key_terms):
+        for idx, term in enumerate(key_terms):
+            NoteKeyTerm.objects.create(
+                note=note,
+                term=term.get('term', ''),
+                definition=term.get('definition', ''),
+                position=idx,
             )
 
-            for idx, term in enumerate(result.get('key_terms', [])):
-                NoteKeyTerm.objects.create(
-                    note=note,
-                    term=term.get('term', ''),
-                    definition=term.get('definition', ''),
-                    position=idx,
+    @staticmethod
+    def save_flashcards(*, note, flashcards):
+        for idx, card in enumerate(flashcards):
+            NoteFlashcard.objects.create(
+                note=note,
+                question=card.get('question', ''),
+                answer=card.get('answer', ''),
+                position=idx,
+            )
+
+    @staticmethod
+    def save_sections(*, note, sections):
+        for sec_idx, section in enumerate(sections):
+            sec_obj = NoteSection.objects.create(
+                note=note,
+                heading=section.get('heading', ''),
+                overview=section.get('overview', ''),
+                position=sec_idx,
+            )
+
+            for sub_idx, subtopic in enumerate(section.get('subtopics', [])):
+                NoteSubtopic.objects.create(
+                    section=sec_obj,
+                    heading=subtopic.get('heading', ''),
+                    content_md=subtopic.get('content_md', ''),
+                    examples=subtopic.get('examples', []),
+                    key_takeaways=subtopic.get('key_takeaways', []),
+                    position=sub_idx,
                 )
 
-            for idx, card in enumerate(result.get('flashcards', [])):
-                NoteFlashcard.objects.create(
-                    note=note,
-                    question=card.get('question', ''),
-                    answer=card.get('answer', ''),
-                    position=idx,
-                )
-
-            for sec_idx, section in enumerate(result.get('sections', [])):
-                sec_obj = NoteSection.objects.create(
-                    note=note,
-                    heading=section.get('heading', ''),
-                    overview=section.get('overview', ''),
-                    position=sec_idx,
-                )
-
-                for sub_idx, subtopic in enumerate(section.get('subtopics', [])):
-                    NoteSubtopic.objects.create(
-                        section=sec_obj,
-                        heading=subtopic.get('heading', ''),
-                        content_md=subtopic.get('content_md', ''),
-                        examples=subtopic.get('examples', []),
-                        key_takeaways=subtopic.get('key_takeaways', []),
-                        position=sub_idx,
-                    )
+    @staticmethod
+    def persist_note_bundle(*, user, source_filename, page_count, mode, result):
+        with transaction.atomic():
+            note = NotesAPIAction.create_note(
+                user=user,
+                source_filename=source_filename,
+                page_count=page_count,
+                mode=mode,
+                result=result,
+            )
+            NotesAPIAction.save_key_terms(
+                note=note,
+                key_terms=result.get('key_terms', []),
+            )
+            NotesAPIAction.save_flashcards(
+                note=note,
+                flashcards=result.get('flashcards', []),
+            )
+            NotesAPIAction.save_sections(
+                note=note,
+                sections=result.get('sections', []),
+            )
 
         return note
 

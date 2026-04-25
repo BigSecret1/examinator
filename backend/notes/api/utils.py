@@ -16,6 +16,12 @@ SYSTEM_INSTRUCTION_PATHS = [
     Path(__file__).resolve().parent.parent.parent / 'scripts' /
     'notes_system_instruction.md',
 ]
+USER_PROMPT_TEXT_PATHS = [
+    NOTES_PROMPT_DIR / 'user_prompt_text.md',
+]
+USER_PROMPT_VISION_PATHS = [
+    NOTES_PROMPT_DIR / 'user_prompt_vision.md',
+]
 
 SYSTEM_INSTRUCTION = None
 for path in SYSTEM_INSTRUCTION_PATHS:
@@ -27,6 +33,41 @@ if SYSTEM_INSTRUCTION is None:
     SYSTEM_INSTRUCTION = (
         'You are an expert study-notes writer for students. '
         'Generate structured notes using the provided schema.'
+    )
+
+USER_PROMPT_TEMPLATE_TEXT = None
+for path in USER_PROMPT_TEXT_PATHS:
+    if path.exists():
+        USER_PROMPT_TEMPLATE_TEXT = path.read_text(encoding='utf-8')
+        break
+
+if USER_PROMPT_TEMPLATE_TEXT is None:
+    USER_PROMPT_TEMPLATE_TEXT = (
+        'Generate structured study notes from the document below.\n\n'
+        'Detected outline (use these as your section headings if non-empty):\n'
+        '{outline}\n\n'
+        '--- BEGIN DOCUMENT TEXT ---\n'
+        '{text}\n'
+        '--- END DOCUMENT TEXT ---\n'
+    )
+
+USER_PROMPT_TEMPLATE_VISION = None
+for path in USER_PROMPT_VISION_PATHS:
+    if path.exists():
+        USER_PROMPT_TEMPLATE_VISION = path.read_text(encoding='utf-8')
+        break
+
+if USER_PROMPT_TEMPLATE_VISION is None:
+    USER_PROMPT_TEMPLATE_VISION = (
+        'Generate structured study notes from the attached PDF document.\n\n'
+        'The PDF is scanned or image-based. Read the page images directly: '
+        'perform\n'
+        'OCR, interpret diagrams and equations, and produce the structured '
+        'notes\n'
+        'defined by the schema. Use surrounding context to correct likely OCR '
+        'errors.\n\n'
+        'Detected outline (use these as your section headings if non-empty):\n'
+        '{outline}\n'
     )
 
 NOTES_SCHEMA = {
@@ -100,25 +141,3 @@ NOTES_SCHEMA = {
         'sections',
     ],
 }
-
-USER_PROMPT_TEMPLATE_TEXT = '''\
-Generate structured study notes from the document below.
-
-Detected outline (use these as your section headings if non-empty):
-{outline}
-
---- BEGIN DOCUMENT TEXT ---
-{text}
---- END DOCUMENT TEXT ---
-'''
-
-USER_PROMPT_TEMPLATE_VISION = '''\
-Generate structured study notes from the attached PDF document.
-
-The PDF is scanned or image-based. Read the page images directly: perform
-OCR, interpret diagrams and equations, and produce the structured notes
-defined by the schema. Use surrounding context to correct likely OCR errors.
-
-Detected outline (use these as your section headings if non-empty):
-{outline}
-'''
