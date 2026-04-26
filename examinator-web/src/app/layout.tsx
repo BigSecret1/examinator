@@ -7,8 +7,9 @@ import "@/styles/globals.css";
 import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "Examinator",
-  description: "Train your brain everyday with questions from various subjects & topics.",
+  title: "Examinator — Turn any PDF into smart study notes",
+  description:
+    "Upload your textbook, lecture slides, or research paper. Examinator generates structured notes, a key-term glossary, and active-recall flashcards in minutes.",
 };
 
 export default function RootLayout({

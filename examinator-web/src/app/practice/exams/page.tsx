@@ -1,13 +1,24 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
+import AuthGuard from "@/components/AuthGuard";
+import UserAvatar from "@/components/UserAvatar";
 import ExamFilterPanel from "@/components/ExamFilterPanel";
 import QuizView from "@/components/QuizView";
 import { getExamDailyQuestions } from "@/lib/api";
 import type { Question, Difficulty } from "@/types";
 
-export default function ExamsPage() {
+export default function Page() {
+  return (
+    <AuthGuard>
+      <ExamsPage />
+    </AuthGuard>
+  );
+}
+
+function ExamsPage() {
   const [questions, setQuestions] = useState<Question[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,23 +42,26 @@ export default function ExamsPage() {
       <header className="border-b border-surface-light/30 bg-primary/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center shadow-lg shadow-secondary/25">
-              <Image
-                src="/examinator-icon.png"
-                alt="Examinator logo"
-                width={38}
-                height={50}
-                className="w-6 h-6 object-contain"
-                priority
-              />
-            </div>
-            <h1 className="text-xl font-bold text-text-primary tracking-tight">
-              Examinator
-            </h1>
+            <Link href="/" className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center shadow-lg shadow-secondary/25">
+                <Image
+                  src="/examinator-icon.png"
+                  alt="Examinator logo"
+                  width={38}
+                  height={50}
+                  className="w-6 h-6 object-contain"
+                  priority
+                />
+              </div>
+              <h1 className="text-xl font-bold text-text-primary tracking-tight">
+                Examinator
+              </h1>
+            </Link>
             <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-secondary/20 text-secondary border border-secondary/30">
               Beta
             </span>
           </div>
+          <UserAvatar />
         </div>
       </header>
 
