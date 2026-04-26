@@ -70,7 +70,10 @@ interface FetchOptions extends RequestInit {
   anonymous?: boolean;
 }
 
-async function authedFetch(url: string, opts: FetchOptions = {}): Promise<Response> {
+async function authedFetch(
+  url: string,
+  opts: FetchOptions = {},
+): Promise<Response> {
   const { anonymous, headers, ...rest } = opts;
   const finalHeaders = new Headers(headers ?? {});
   if (
@@ -221,8 +224,17 @@ export async function getNoteQuota() {
 }
 
 export async function getNotes() {
-  const data = await fetchJSON<{ results: NoteListItem[] }>(`${API_URL}/notes/`);
+  const data = await fetchJSON<{ results: NoteListItem[] }>(
+    `${API_URL}/notes/`,
+  );
   return data.results;
+}
+
+export async function submitFeedback(message: string): Promise<void> {
+  await fetchJSON(`${API_URL}/notes/feedback/`, {
+    method: "POST",
+    body: JSON.stringify({ message }),
+  });
 }
 
 export interface NoteSubtopic {
@@ -300,10 +312,11 @@ export async function uploadNotePdf(
     res = retry;
   }
 
-  const json = (await res.json().catch(() => null)) as NoteUploadResponse | null;
+  const json = (await res
+    .json()
+    .catch(() => null)) as NoteUploadResponse | null;
   if (!json) {
     throw new Error(`Upload failed (HTTP ${res.status}).`);
   }
   return json;
 }
-

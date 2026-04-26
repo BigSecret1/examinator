@@ -5,6 +5,7 @@
 from django.urls import path
 
 from .views import (
+    FeedbackAPIView,
     NoteDetailAPIView,
     NotesListAPIView,
     NotesQuotaAPIView,
@@ -16,5 +17,6 @@ urlpatterns = [
     path('upload/', NotesUploadAPIView.as_view(), name='notes-upload'),
     path('quota/', NotesQuotaAPIView.as_view(), name='notes-quota'),
     path('<int:pk>/', NoteDetailAPIView.as_view(), name='notes-detail'),
+    path('feedback/', FeedbackAPIView.as_view(), name='notes-feedback'),
 ]
 
