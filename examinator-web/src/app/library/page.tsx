@@ -98,7 +98,7 @@ function Library() {
 
         {/* Search */}
         {notes && notes.length > 0 && (
-          <div className="relative max-w-md">
+          <div className="relative w-full">
             <input
               type="search"
               value={query}
@@ -106,9 +106,16 @@ function Library() {
               placeholder="Search by title, filename, or summary…"
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface border border-surface-lighter text-sm placeholder:text-text-muted focus:outline-none focus:border-secondary/50 focus:ring-2 focus:ring-secondary/20 transition"
             />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">
-              🔍
-            </span>
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35m0 0A7 7 0 1 0 6.35 6.35a7 7 0 0 0 10.3 10.3Z" />
+            </svg>
           </div>
         )}
 
