@@ -157,33 +157,33 @@ function NotePreviewMock() {
           <span className="w-2.5 h-2.5 rounded-full bg-error/70" />
           <span className="w-2.5 h-2.5 rounded-full bg-warning/70" />
           <span className="w-2.5 h-2.5 rounded-full bg-success/70" />
-          <span className="ml-3 text-xs text-text-muted">organic-chemistry-ch4.pdf</span>
+          <span className="ml-3 text-xs text-text-muted">intro-to-psychology-ch3.pdf</span>
         </div>
 
         <div className="space-y-4">
           <div>
             <p className="text-xs uppercase tracking-wider text-text-muted">Note</p>
-            <h3 className="text-lg font-semibold">Alkenes &amp; Alkynes — Reactions and Mechanisms</h3>
+            <h3 className="text-lg font-semibold">Memory &amp; Learning — How the Brain Retains Information</h3>
           </div>
 
           <div className="rounded-xl bg-primary-light/60 border border-surface-lighter p-4">
             <p className="text-xs uppercase tracking-wider text-accent mb-2">Section 1</p>
-            <p className="font-medium">Electrophilic addition</p>
+            <p className="font-medium">Types of Memory</p>
             <ul className="mt-2 text-sm text-text-secondary space-y-1 list-disc list-inside">
-              <li>Markovnikov vs anti-Markovnikov</li>
-              <li>Carbocation stability</li>
+              <li>Short-term vs long-term memory</li>
+              <li>Working memory and its limits</li>
             </ul>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl bg-secondary/10 border border-secondary/30 p-3">
               <p className="text-[10px] uppercase tracking-wider text-secondary-light mb-1">Key term</p>
-              <p className="text-sm font-semibold">Carbocation</p>
-              <p className="text-xs text-text-secondary mt-1">A carbon atom with a positive charge…</p>
+              <p className="text-sm font-semibold">Encoding</p>
+              <p className="text-xs text-text-secondary mt-1">Converting information into a storable memory trace…</p>
             </div>
             <div className="rounded-xl bg-accent/10 border border-accent/30 p-3">
               <p className="text-[10px] uppercase tracking-wider text-accent mb-1">Flashcard</p>
-              <p className="text-sm font-semibold">Q: What stabilizes a 3° carbocation?</p>
+              <p className="text-sm font-semibold">Q: What is the "spacing effect"?</p>
             </div>
           </div>
         </div>
