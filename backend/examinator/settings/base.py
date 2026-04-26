@@ -107,7 +107,7 @@ GEMINI_API_KEY = config("GEMINI_API_KEY", default="")
 # Notes app — per-user daily file upload quota (platform-wide default).
 # Per-user overrides live in notes.UserUploadQuota.
 FILE_UPLOAD_DAILY_LIMIT = config(
-    "FILE_UPLOAD_DAILY_LIMIT", default=5, cast=int
+    "FILE_UPLOAD_DAILY_LIMIT", default=1, cast=int
 )
 
 # Google OAuth

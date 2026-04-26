@@ -10,7 +10,6 @@ import { usePathname } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 
 const NAV = [
-  { href: "/", label: "Home" },
   { href: "/library", label: "Library" },
 ];
 
@@ -31,13 +30,15 @@ export function AppHeader() {
               priority
             />
           </div>
-          <span className="text-xl font-bold tracking-tight">Examinator</span>
-          <span className="hidden sm:inline px-2 py-0.5 text-xs font-semibold rounded-full bg-secondary/20 text-secondary border border-secondary/30">
-            Beta
-          </span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-xl font-bold tracking-tight">Examinator</span>
+            <span className="hidden sm:inline px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-secondary/20 text-secondary border border-secondary/30 leading-none">
+              Beta
+            </span>
+          </div>
         </Link>
 
-        <nav className="flex-1 flex items-center justify-center gap-2">
+        <nav className="flex-1 flex items-center justify-start gap-2">
           {NAV.map((item) => {
             const active =
               item.href === "/"
