@@ -5,6 +5,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { useSignInModal } from "@/hooks/useSignInModal";
 
@@ -43,7 +44,7 @@ function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-surface-light/30 bg-primary/80 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-        <a href="/" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center shadow-lg shadow-secondary/25">
             <Image
               src="/examinator-icon.png"
@@ -58,7 +59,7 @@ function SiteHeader() {
           <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-secondary/20 text-secondary border border-secondary/30">
             Beta
           </span>
-        </a>
+        </Link>
 
         <nav className="hidden md:flex items-center gap-8 text-sm text-text-secondary">
           <a href="#how" className="hover:text-text-primary transition">How it works</a>
@@ -183,7 +184,7 @@ function NotePreviewMock() {
             </div>
             <div className="rounded-xl bg-accent/10 border border-accent/30 p-3">
               <p className="text-[10px] uppercase tracking-wider text-accent mb-1">Flashcard</p>
-              <p className="text-sm font-semibold">Q: What is the "spacing effect"?</p>
+              <p className="text-sm font-semibold">Q: What is the &ldquo;spacing effect&rdquo;?</p>
             </div>
           </div>
         </div>
