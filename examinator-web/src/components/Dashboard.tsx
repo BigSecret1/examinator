@@ -4,7 +4,6 @@
 
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { AppFooter, AppHeader } from "@/components/AppShell";
 import UploadModal from "@/components/UploadModal";
@@ -34,15 +33,7 @@ export default function Dashboard() {
 
         <UploadCard onOpen={() => setUploadOpen(true)} />
 
-        <p className="text-sm text-text-muted">
-          Looking for an existing note?{" "}
-          <Link
-            href="/library"
-            className="text-secondary hover:text-secondary-light underline-offset-2 hover:underline"
-          >
-            Open your library →
-          </Link>
-        </p>
+
       </main>
 
       <AppFooter />
