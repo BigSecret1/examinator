@@ -9,11 +9,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from notes.models import FileUploadDailyUsage, Note
+from notes.models import Feedback, FileUploadDailyUsage, Note
 
 from .actions import NotesAPIAction
 from .interfaces import NotesInterface
-from .serializers import NoteListSerializer, NoteSerializer
+from .serializers import FeedbackSerializer, NoteListSerializer, NoteSerializer
 from .utils import MAX_FILE_SIZE_BYTES, MAX_PAGES
 
 
@@ -133,4 +133,26 @@ class NoteDetailAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
         return Response(NoteSerializer(note).data)
+
+
+class FeedbackAPIView(APIView):
+    '''Submit general platform feedback.'''
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        message = request.data.get('message', '').strip()
+        if not message:
+            return Response(
+                {'detail': 'message is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        feedback = Feedback.objects.create(
+            user=request.user,
+            message=message,
+        )
+        return Response(
+            FeedbackSerializer(feedback).data,
+            status=status.HTTP_201_CREATED,
+        )
 

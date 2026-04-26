@@ -11,6 +11,7 @@ import UserAvatar from "@/components/UserAvatar";
 
 const NAV = [
   { href: "/library", label: "Library" },
+  { href: "/feedback", label: "Feedback" },
 ];
 
 export function AppHeader() {
