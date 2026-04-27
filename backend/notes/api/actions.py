@@ -161,7 +161,7 @@ class NotesAPIAction:
         return headings
 
     @staticmethod
-    def find_pdf_type(*, pdf_bytes, text, page_count, force_vision=False):
+    def resolve_processing_mode(*, pdf_bytes, text, page_count, force_vision=False):
         if force_vision:
             return 'vision'
 
@@ -190,7 +190,7 @@ class NotesAPIAction:
 
     @staticmethod
     def generate_notes(*, pdf_bytes, outline_lines, text, page_count, force_vision=False):
-        mode = NotesAPIAction.find_pdf_type(
+        mode = NotesAPIAction.resolve_processing_mode(
             pdf_bytes=pdf_bytes,
             text=text,
             page_count=page_count,
