@@ -59,10 +59,14 @@ Each subtopic:
 
 - `heading`: the name of the idea (e.g. 'Single Responsibility Principle', 'Avoid Flag Arguments', 'F.I.R.S.T. Principles').
 - `content_md`: a focused explanation of that single idea — 4-8 sentences OR an equivalent bullet list. May use Markdown (`**bold**`, bullets, `inline code`, fenced code blocks). Explain in the student's own words; do not copy verbatim.
-- `examples`: 0-3 worked examples from the source. For quantitative or procedural
-  examples, write each step on its own line prefixed with 'Step N:' and include
-  intermediate equations using LaTeX. For qualitative examples, one short paragraph
-  is enough. Empty array if the source provides none — do not invent.
+- `examples`: 0-3 worked examples from the source. Format depends on the type:
+  - **Quantitative / procedural** — start with a bold label on its own line (e.g.
+    `**Example 8.1:** A plane EM wave...`), then a Markdown numbered list where
+    each item is one step. Include intermediate equations using LaTeX inline
+    (`$...$`) or display (`$$...$$`). Each step must be on its own list item —
+    never run multiple steps into one sentence.
+  - **Qualitative** — one short paragraph is enough; no numbered steps needed.
+  - Empty array if the source provides none — do not invent.
 - `key_takeaways`: 2-5 short bullets a student would memorize for an exam. Where a
   well-known mnemonic exists for this concept, include it as one of the key_takeaways
   prefixed with 'Mnemonic:'.

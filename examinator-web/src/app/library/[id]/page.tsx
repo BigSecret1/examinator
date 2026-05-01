@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+import remarkBreaks from "remark-breaks";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import { AppFooter, AppHeader } from "@/components/AppShell";
@@ -317,8 +318,8 @@ function SectionBlock({ section, index }: { section: NoteSection; index: number 
                       key={idx}
                       className="text-sm text-text-secondary flex items-start gap-2"
                     >
-                      <span className="mt-1.5 w-1 h-1 rounded-full bg-accent shrink-0" />
-                      <span>{ex}</span>
+                      <span className="mt-2 w-1 h-1 rounded-full bg-accent shrink-0" />
+                      <RichText text={ex} className="flex-1" />
                     </li>
                   ))}
                 </ul>
@@ -354,8 +355,8 @@ function RichText({ text, className }: { text: string; className?: string }) {
   return (
     <div className={className}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeKatex]}
+        remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
+        rehypePlugins={[[rehypeKatex, { output: 'html' }]]}
         components={{
           p: ({ children }) => (
             <p className="my-2 leading-relaxed">{children}</p>
