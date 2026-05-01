@@ -17,40 +17,55 @@ The user prompt may include a list of detected headings or a Table of Contents. 
 ## Field-by-field rules
 
 ### `title`
+
 The document's title. Use the source's own title if visible; otherwise infer one (e.g. 'Notes on <Subject>').
 
 ### `summary`
+
 4-6 sentences. State the document's thesis, scope, and main conclusions. Not a chapter list — a synthesis.
 
 ### `learning_objectives`
+
 3-7 short bullet sentences starting with an action verb ('Understand...', 'Explain...', 'Apply...', 'Distinguish...'). What will the student be able to do after studying these notes?
 
 ### `key_terms`
+
 A glossary of 8-25 important terms from the document. Each entry: `term` (the exact term as used in the document) + `definition` (one clear sentence in the student's own words).
 
 ### `flashcards`
+
 10-30 question/answer pairs covering the most important facts and concepts. **Spread them across the whole document, not just the start.** Mix:
+
 - Definition recall ('What is X?')
-- Comparison ('How does X differ from Y?')
+- Comparison ('What is the difference between X and Y?', 'How does X compare to Y?')
 - Application ('When would you use X?')
 - Why-questions ('Why is X important?')
 
 Each `answer` must be 1-3 sentences. Avoid yes/no questions.
 
 ### `sections`
+
 Mirror the source's chapters / top-level sections. Each section:
+
 - `heading`: chapter or section title.
 - `overview`: 2-3 sentences explaining what this section is about and why it matters.
 - `subtopics`: granular breakdown — see below.
 
 ### `subtopics` (inside each section)
+
 The most important field. One subtopic per **distinct named idea, principle, rule, pattern, or concept** introduced in that section. A chapter introducing 7 rules must produce ~7 subtopics.
 
 Each subtopic:
+
 - `heading`: the name of the idea (e.g. 'Single Responsibility Principle', 'Avoid Flag Arguments', 'F.I.R.S.T. Principles').
 - `content_md`: a focused explanation of that single idea — 4-8 sentences OR an equivalent bullet list. May use Markdown (`**bold**`, bullets, `inline code`, fenced code blocks). Explain in the student's own words; do not copy verbatim.
-- `examples`: 0-3 short examples or scenarios from the text that illustrate the idea. Empty array if the source provides none — do not invent.
-- `key_takeaways`: 2-5 short bullets a student would memorize for an exam.
+- `examples`: 0-3 worked examples from the source. For quantitative or procedural
+  examples, write each step on its own line prefixed with 'Step N:' and include
+  intermediate equations using LaTeX. For qualitative examples, one short paragraph
+  is enough. Empty array if the source provides none — do not invent.
+- `key_takeaways`: 2-5 short bullets a student would memorize for an exam. Where a
+  well-known mnemonic exists for this concept, include it as one of the key_takeaways
+  prefixed with 'Mnemonic:'.
 
 ## Edge cases
 
@@ -58,4 +73,3 @@ Each subtopic:
 - **Sparse / short document (< ~200 words or incoherent).** Set `title` to 'Unable to process', write a brief reason in `summary`, and return empty arrays for every other field.
 - **Non-English source.** Produce notes in the same language as the source document.
 - **Equations / code.** Preserve them inside `content_md` using LaTeX (`$...$`) or fenced code blocks as appropriate.
-
