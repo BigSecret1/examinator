@@ -37,7 +37,6 @@ function formatBytes(n: number) {
 export default function UploadModal({ open, onClose, onUploaded }: Props) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [file, setFile] = useState<File | null>(null);
-  const [forceVision, setForceVision] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reason, setReason] = useState<string | null>(null);
   const [response, setResponse] = useState<Extract<NoteUploadResponse, { status: "success" }> | null>(null);
@@ -50,7 +49,6 @@ export default function UploadModal({ open, onClose, onUploaded }: Props) {
     if (!open) return;
     setPhase("idle");
     setFile(null);
-    setForceVision(false);
     setError(null);
     setReason(null);
     setResponse(null);
@@ -98,7 +96,7 @@ export default function UploadModal({ open, onClose, onUploaded }: Props) {
     setError(null);
     setReason(null);
     try {
-      const result = await uploadNotePdf(file, { forceVision });
+      const result = await uploadNotePdf(file);
       if (result.status === "success") {
         setResponse(result);
         setPhase("success");
@@ -282,23 +280,6 @@ export default function UploadModal({ open, onClose, onUploaded }: Props) {
               <p className="text-xs text-error">{error}</p>
             )}
 
-            {/* Vision toggle */}
-            <label className="flex items-start gap-3 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={forceVision}
-                disabled={busy}
-                onChange={(e) => setForceVision(e.target.checked)}
-                className="mt-0.5 w-4 h-4 accent-secondary"
-              />
-              <span className="text-sm">
-                <span className="font-medium">Force vision mode</span>
-                <span className="block text-xs text-text-muted">
-                  Use this for scanned or handwritten PDFs.
-                </span>
-              </span>
-            </label>
-
             {/* Action */}
             <button
               type="button"
@@ -316,9 +297,16 @@ export default function UploadModal({ open, onClose, onUploaded }: Props) {
             </button>
 
             {busy && (
-              <p className="text-xs text-text-muted text-center">
-                This can take 20–60 seconds depending on the PDF length.
-              </p>
+              <div className="rounded-xl bg-surface-light/60 border border-surface-lighter px-4 py-3 text-center space-y-1">
+                <p className="text-xs font-medium text-text-primary">
+                  Hang tight — your notes are being crafted
+                </p>
+                <p className="text-xs text-text-muted">
+                  We&apos;re reading the entire PDF and generating sections, flashcards, and key terms.
+                  This usually takes <span className="text-text-secondary font-medium">1–3 minutes</span> for longer documents.
+                  Please keep this window open.
+                </p>
+              </div>
             )}
           </div>
         )}

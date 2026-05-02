@@ -189,7 +189,7 @@ class NotesAPIAction:
         return 'vision' if density < MIN_DENSITY_CHARS_PER_PAGE else 'text'
 
     @staticmethod
-    def generate_notes(*, pdf_bytes, outline_lines, text, page_count, force_vision=False):
+    def generate_notes(*, pdf_bytes, outline_lines, text, page_count, force_vision=True):
         mode = NotesAPIAction.resolve_processing_mode(
             pdf_bytes=pdf_bytes,
             text=text,
