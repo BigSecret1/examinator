@@ -23,17 +23,34 @@ _FUN_FACT_PROMPT = (
 
 
 class FunFactAction:
-    '''Generates and caches a daily fun fact per user.'''
+    '''Generates one fun fact per day, shared across all users.
+
+    The first user to hit the endpoint triggers generation; every subsequent
+    user that day receives the same fact text copied to their own row.
+    '''
 
     @staticmethod
     def get_fun_fact(user):
-        '''Return today\'s fun fact for the user, generating it if needed.'''
+        '''Return today\'s fun fact, generating it only once per day.'''
         today = timezone.localdate()
 
+        # Fast path: this user already has today's fact.
         cached = DailyFunFact.objects.filter(user=user, date=today).first()
         if cached:
             return cached.fact
 
+        # Check if any user already triggered generation today.
+        any_today = DailyFunFact.objects.filter(date=today).first()
+        if any_today:
+            fact = any_today.fact
+            DailyFunFact.objects.get_or_create(
+                user=user,
+                date=today,
+                defaults={'fact': fact},
+            )
+            return fact
+
+        # First request of the day — generate and cache.
         api_key = settings.GEMINI_API_KEY
         if not api_key:
             return None
