@@ -4,15 +4,21 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppFooter, AppHeader } from "@/components/AppShell";
 import UploadModal from "@/components/UploadModal";
 import { useAuth } from "@/hooks/useAuth";
+import { getFunFact } from "@/lib/api";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const firstName = user?.first_name?.trim() || "there";
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [funFact, setFunFact] = useState<string | null>(null);
+
+  useEffect(() => {
+    getFunFact().then(setFunFact);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-primary text-text-primary">
@@ -31,15 +37,29 @@ export default function Dashboard() {
           </p>
         </section>
 
+        {funFact && <FunFactCard firstName={firstName} fact={funFact} />}
+
         <UploadCard onOpen={() => setUploadOpen(true)} />
-
-
       </main>
 
       <AppFooter />
 
       <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
     </div>
+  );
+}
+
+function FunFactCard({ firstName, fact }: { firstName: string; fact: string }) {
+  return (
+    <section className="relative overflow-hidden rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/10 via-surface to-secondary/10 p-6">
+      <p className="text-sm font-semibold text-text-primary">
+        <span className="text-accent">{firstName}</span>
+        <span className="text-text-muted font-normal">, did you know?</span>
+      </p>
+      <p className="mt-2 text-sm text-text-secondary leading-relaxed max-w-3xl">
+        {fact}
+      </p>
+    </section>
   );
 }
 
