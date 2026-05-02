@@ -7,6 +7,12 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import remarkBreaks from "remark-breaks";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import { AppFooter, AppHeader } from "@/components/AppShell";
 import AuthGuard from "@/components/AuthGuard";
 import {
@@ -312,8 +318,8 @@ function SectionBlock({ section, index }: { section: NoteSection; index: number 
                       key={idx}
                       className="text-sm text-text-secondary flex items-start gap-2"
                     >
-                      <span className="mt-1.5 w-1 h-1 rounded-full bg-accent shrink-0" />
-                      <span>{ex}</span>
+                      <span className="mt-2 w-1 h-1 rounded-full bg-accent shrink-0" />
+                      <RichText text={ex} className="flex-1" />
                     </li>
                   ))}
                 </ul>
@@ -344,66 +350,49 @@ function SectionBlock({ section, index }: { section: NoteSection; index: number 
   );
 }
 
-/** Lightweight markdown-ish renderer: paragraphs, blank-line breaks, simple `- ` lists. */
+/** Markdown renderer with LaTeX (KaTeX), tables, bold, italic, and lists. */
 function RichText({ text, className }: { text: string; className?: string }) {
-  const blocks = useMemo(() => parseBlocks(text), [text]);
   return (
     <div className={className}>
-      {blocks.map((b, i) =>
-        b.kind === "ul" ? (
-          <ul key={i} className="list-disc list-outside pl-5 space-y-1 my-2">
-            {b.items.map((it, j) => (
-              <li key={j}>{it}</li>
-            ))}
-          </ul>
-        ) : (
-          <p key={i} className="my-2 leading-relaxed whitespace-pre-wrap">
-            {b.text}
-          </p>
-        ),
-      )}
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
+        rehypePlugins={[[rehypeKatex, { output: 'html' }]]}
+        components={{
+          p: ({ children }) => (
+            <p className="my-2 leading-relaxed">{children}</p>
+          ),
+          ul: ({ children }) => (
+            <ul className="list-disc list-outside pl-5 space-y-1 my-2">{children}</ul>
+          ),
+          ol: ({ children }) => (
+            <ol className="list-decimal list-outside pl-5 space-y-1 my-2">{children}</ol>
+          ),
+          strong: ({ children }) => (
+            <strong className="font-semibold text-text-primary">{children}</strong>
+          ),
+          em: ({ children }) => (
+            <em className="italic text-text-secondary">{children}</em>
+          ),
+          table: ({ children }) => (
+            <div className="overflow-x-auto my-3">
+              <table className="min-w-full text-sm border border-surface-lighter rounded-lg">{children}</table>
+            </div>
+          ),
+          th: ({ children }) => (
+            <th className="px-3 py-2 text-left font-semibold bg-surface-light border-b border-surface-lighter">{children}</th>
+          ),
+          td: ({ children }) => (
+            <td className="px-3 py-2 border-b border-surface-lighter">{children}</td>
+          ),
+          code: ({ children }) => (
+            <code className="px-1.5 py-0.5 rounded bg-surface-light text-xs font-mono text-accent">{children}</code>
+          ),
+        }}
+      >
+        {text}
+      </ReactMarkdown>
     </div>
   );
-}
-
-type Block = { kind: "p"; text: string } | { kind: "ul"; items: string[] };
-
-function parseBlocks(text: string): Block[] {
-  const lines = text.replace(/\r\n/g, "\n").split("\n");
-  const out: Block[] = [];
-  let para: string[] = [];
-  let list: string[] = [];
-
-  const flushPara = () => {
-    if (para.length) {
-      out.push({ kind: "p", text: para.join("\n").trim() });
-      para = [];
-    }
-  };
-  const flushList = () => {
-    if (list.length) {
-      out.push({ kind: "ul", items: list });
-      list = [];
-    }
-  };
-
-  for (const raw of lines) {
-    const line = raw.trimEnd();
-    const m = line.match(/^\s*[-*]\s+(.*)$/);
-    if (m) {
-      flushPara();
-      list.push(m[1]);
-    } else if (line.trim() === "") {
-      flushList();
-      flushPara();
-    } else {
-      flushList();
-      para.push(line);
-    }
-  }
-  flushList();
-  flushPara();
-  return out;
 }
 
 /* ---------------- Key terms tab ---------------- */

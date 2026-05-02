@@ -161,19 +161,37 @@ class NotesAPIAction:
         return headings
 
     @staticmethod
-    def find_pdf_type(*, text, page_count, force_vision=False):
+    def resolve_processing_mode(*, pdf_bytes, text, page_count, force_vision=False):
         if force_vision:
             return 'vision'
-        
+
         if not page_count:
             return 'vision'
-        
+
+        # Count image objects across the first 10 pages as a sample.
+        try:
+            doc = fitz.open(stream=pdf_bytes, filetype='pdf')
+            sample_pages = min(page_count, 10)
+            image_pages = sum(
+                1 for i in range(sample_pages) if doc[i].get_images()
+            )
+            doc.close()
+        except Exception:
+            image_pages = 0
+
+        # If more than 30% of sampled pages contain images/figures, use vision
+        # so diagrams and equations rendered as graphics are not lost.
+        if image_pages / max(sample_pages, 1) > 0.30:
+            return 'vision'
+
+        # Fall back to text mode only for pure prose PDFs with sufficient density.
         density = len(text.strip()) / page_count
         return 'vision' if density < MIN_DENSITY_CHARS_PER_PAGE else 'text'
 
     @staticmethod
-    def generate_notes(*, pdf_bytes, outline_lines, text, page_count, force_vision=False):
-        mode = NotesAPIAction.find_pdf_type(
+    def generate_notes(*, pdf_bytes, outline_lines, text, page_count, force_vision=True):
+        mode = NotesAPIAction.resolve_processing_mode(
+            pdf_bytes=pdf_bytes,
             text=text,
             page_count=page_count,
             force_vision=force_vision,
