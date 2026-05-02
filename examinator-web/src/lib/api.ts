@@ -223,6 +223,17 @@ export async function getNoteQuota() {
   return fetchJSON<NoteQuota>(`${API_URL}/notes/quota/`);
 }
 
+export async function getFunFact(): Promise<string | null> {
+  try {
+    const data = await fetchJSON<{ fact: string }>(
+      `${API_URL}/notes/fun-fact/`,
+    );
+    return data.fact;
+  } catch {
+    return null;
+  }
+}
+
 export async function getNotes() {
   const data = await fetchJSON<{ results: NoteListItem[] }>(
     `${API_URL}/notes/`,

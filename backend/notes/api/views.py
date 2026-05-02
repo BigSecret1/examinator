@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 
 from notes.models import Feedback, FileUploadDailyUsage, Note
 
-from .actions import NotesAPIAction
+from .actions import FunFactAction, NotesAPIAction
 from .interfaces import NotesInterface
 from .serializers import FeedbackSerializer, NoteListSerializer, NoteSerializer
 from .utils import MAX_FILE_SIZE_BYTES, MAX_PAGES
@@ -155,4 +155,23 @@ class FeedbackAPIView(APIView):
             FeedbackSerializer(feedback).data,
             status=status.HTTP_201_CREATED,
         )
+
+
+class FunFactAPIView(APIView):
+    '''Returns today\'s fun fact for the authenticated user.
+
+    Generated once per user per day using a lightweight Gemini model and
+    cached in the DB for subsequent requests.
+    '''
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        fact = FunFactAction.get_fun_fact(request.user)
+        if fact is None:
+            return Response(
+                {'detail': 'Fun fact unavailable.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        return Response({'fact': fact})
 

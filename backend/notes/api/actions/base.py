@@ -21,7 +21,7 @@ from notes.models import (
     UserUploadQuota,
 )
 
-from .utils import (
+from ..utils import (
     MAX_FILE_SIZE_BYTES,
     MAX_OUTPUT_TOKENS,
     MAX_PAGES,
@@ -96,13 +96,13 @@ class NotesAPIAction:
     def is_file_eligible(*, file_name, file_size, page_count):
         if file_name and not file_name.lower().endswith('.pdf'):
             return False, FileUploadActivity.REASON_NOT_PDF
-        
+
         if file_size is not None and file_size > MAX_FILE_SIZE_BYTES:
             return False, FileUploadActivity.REASON_OVER_SIZE
 
         if page_count is not None and page_count > MAX_PAGES:
             return False, FileUploadActivity.REASON_OVER_PAGES
-        
+
         return True, FileUploadActivity.REASON_OK
 
     @staticmethod
@@ -296,4 +296,3 @@ class NotesAPIAction:
             )
 
         return note
-

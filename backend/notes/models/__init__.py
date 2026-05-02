@@ -13,6 +13,7 @@ from .note_key_term import NoteKeyTerm
 from .file_upload_activity import FileUploadActivity
 from .file_upload_daily_usage import FileUploadDailyUsage
 from .user_upload_quota import UserUploadQuota
+from .daily_fun_fact import DailyFunFact
 from .feedback import Feedback
 
 __all__ = [
@@ -25,5 +26,6 @@ __all__ = [
     'FileUploadDailyUsage',
     'UserUploadQuota',
     'Feedback',
+    'DailyFunFact',
 ]
 
