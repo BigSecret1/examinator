@@ -10,6 +10,7 @@ import Image from "next/image";
 import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "@/hooks/useAuth";
 import { useSignInModal } from "@/hooks/useSignInModal";
+import { isInAppBrowser } from "@/lib/browser";
 
 export default function SignInModal() {
   const { isOpen, redirectTo, close } = useSignInModal();
@@ -17,6 +18,7 @@ export default function SignInModal() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const inApp = typeof window !== "undefined" && isInAppBrowser();
 
   // Auto-close + redirect once authenticated.
   useEffect(() => {
@@ -95,7 +97,21 @@ export default function SignInModal() {
 
         {/* Google button */}
         <div className="mt-6 flex justify-center min-h-[44px]">
-          {submitting ? (
+          {inApp ? (
+            <div className="text-center">
+              <p className="text-sm text-text-secondary mb-4">
+                Google Sign-In doesn&apos;t work inside the LinkedIn app.
+              </p>
+              <a
+                href={typeof window !== "undefined" ? window.location.href : "/"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-white text-sm font-medium hover:bg-secondary/90 transition"
+              >
+                Open in your browser
+              </a>
+            </div>
+          ) : submitting ? (
             <div className="flex items-center gap-2 text-sm text-text-secondary">
               <svg className="animate-spin h-4 w-4 text-secondary" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
