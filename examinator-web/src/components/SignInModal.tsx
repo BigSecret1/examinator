@@ -10,7 +10,7 @@ import Image from "next/image";
 import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "@/hooks/useAuth";
 import { useSignInModal } from "@/hooks/useSignInModal";
-import { isInAppBrowser } from "@/lib/browser";
+import { getInAppBrowserName } from "@/lib/browser";
 
 export default function SignInModal() {
   const { isOpen, redirectTo, close } = useSignInModal();
@@ -18,7 +18,8 @@ export default function SignInModal() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const inApp = typeof window !== "undefined" && isInAppBrowser();
+  const inAppName =
+    typeof window !== "undefined" ? getInAppBrowserName() : null;
 
   // Auto-close + redirect once authenticated.
   useEffect(() => {
@@ -97,10 +98,11 @@ export default function SignInModal() {
 
         {/* Google button */}
         <div className="mt-6 flex justify-center min-h-[44px]">
-          {inApp ? (
+          {inAppName ? (
             <div className="text-center">
               <p className="text-sm text-text-secondary mb-4">
-                Google Sign-In doesn&apos;t work inside the LinkedIn app.
+                Google Sign-In doesn&apos;t work inside the{" "}
+                {inAppName} app.
               </p>
               <a
                 href={typeof window !== "undefined" ? window.location.href : "/"}
