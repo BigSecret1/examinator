@@ -13,4 +13,4 @@
   <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
 </p>
 
-Examinator is an educational platform to prepare question sets and practise.
+Examinator is an educational platform that creates notes out of uploaded PDFs.
